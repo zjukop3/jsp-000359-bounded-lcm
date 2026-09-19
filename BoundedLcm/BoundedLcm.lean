@@ -1,10 +1,10 @@
-import Mathlib.Algebra.BigOperators.Intervals
-import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Analysis.PSeries
 import Mathlib.Analysis.Real.Sqrt
 import Mathlib.Data.List.Sort
 import Mathlib.Data.Nat.GCD.Basic
 import Mathlib.Data.Real.Basic
+import Mathlib.Data.Finset.Dedup
+import Mathlib.Data.Finset.Card
 import Mathlib.Order.Interval.Finset.Nat
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.GCongr
@@ -180,6 +180,66 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
     (ha_lcm : ∀ (i : ℕ) (hi : i + 1 < a.length),
       Nat.lcm (a.get ⟨i, Nat.lt_of_succ_lt hi⟩) (a.get ⟨i + 1, hi⟩) ≤ n) :
     (a.length : ℝ) ≤ 4 * Real.sqrt n + 4 := by
+  -- Step 1: a.length ≤ n (pigeonhole: distinct positive integers in [1,n])
+  have h_nodup : a.Nodup := ha_sorted.nodup
+  have h_card : a.toFinset.card = a.length := List.toFinset_card_of_nodup h_nodup
+  have h_subset : a.toFinset ⊆ Finset.Icc 1 n := by
+    intro x hx
+    rw [List.mem_toFinset] at hx
+    rw [Finset.mem_Icc]
+    exact ⟨ha_pos x hx, ha_le x hx⟩
+  have h_card_Icc : (Finset.Icc (1 : ℕ) n).card = n := by simp
+  have h_len_n : a.length ≤ n := by
+    calc a.length = a.toFinset.card := h_card.symm
+      _ ≤ (Finset.Icc (1 : ℕ) n).card := Finset.card_le_card h_subset
+      _ = n := h_card_Icc
+  have h_sqrt_ge_1 : (1 : ℝ) ≤ Real.sqrt n :=
+    Real.one_le_sqrt.mpr (by exact_mod_cast hn)
+  have h_8_le : (8 : ℝ) ≤ 4 * Real.sqrt n + 4 := by linarith
+  by_cases hl : a.length ≤ 8
+  · have : (a.length : ℝ) ≤ 8 := by exact_mod_cast hl
+    linarith
+  have h_n_ge_9 : 9 ≤ n := by omega
+  by_cases hn23 : n ≤ 23
+  · -- For 9 ≤ n ≤ 23: n ≤ 4√n+4 via (n-4)/4 ≤ √n
+    have h_sq_nat : (n - 4)^2 ≤ 16 * n := by
+      interval_cases n <;> decide
+    have h_y : (0 : ℝ) ≤ (n - 4) / 4 := by
+      have h4 : (4 : ℝ) ≤ n := by exact_mod_cast (by omega : 4 ≤ n)
+      have : (0 : ℝ) ≤ n - 4 := by linarith
+      exact div_nonneg this (by norm_num)
+    have h_sqrt_sq : Real.sqrt (((n - 4 : ℝ) / 4)^2) = (n - 4 : ℝ) / 4 :=
+      Real.sqrt_sq h_y
+    have h_1 : ((n - 4 : ℝ) / 4)^2 ≤ n := by
+      interval_cases n <;> { push_cast; norm_num }
+    have h_2 := Real.sqrt_le_sqrt h_1
+    rw [Real.sqrt_sq h_y] at h_2
+    push_cast
+    have h_len_n_r : (a.length : ℝ) ≤ n := by exact_mod_cast h_len_n
+    linarith [h_2, h_len_n_r]
+  -- Step 5: For n ≥ 24
+  have h_n_24 : (24 : ℝ) ≤ n := by exact_mod_cast (by omega : 24 ≤ n)
+  by_cases hl24 : a.length ≤ 23
+  · -- a.length ≤ 23 ≤ 4*√24+4 ≤ 4*√n+4
+    -- Need √24 ≥ 19/4 = 4.75, since (19/4)² = 361/16 = 22.5625 ≤ 24
+    have h_19_sq : (19 : ℕ)^2 ≤ 16 * (24 : ℕ) := by norm_num
+    have h_y : (0 : ℝ) ≤ (19 / 4 : ℝ) := by norm_num
+    have h_sq_19 : ((19 / 4 : ℝ)^2) ≤ 24 := by
+      have h_eq : ((19 / 4 : ℝ)^2) = (19 : ℝ)^2 / 16 := by ring
+      rw [h_eq, div_le_iff₀ (by norm_num : (0 : ℝ) < 16)]
+      push_cast
+      exact_mod_cast h_19_sq
+    have h_sqrt_sq : Real.sqrt ((19 / 4 : ℝ)^2) = 19 / 4 := Real.sqrt_sq h_y
+    have h_le_24 : (19 / 4 : ℝ) ≤ Real.sqrt 24 := by
+      have := Real.sqrt_le_sqrt h_sq_19
+      rwa [h_sqrt_sq] at this
+    have h_le_n : (19 / 4 : ℝ) ≤ Real.sqrt n := by
+      have := Real.sqrt_le_sqrt h_n_24
+      linarith
+    push_cast
+    have h_len_r : (a.length : ℝ) ≤ 23 := by exact_mod_cast hl24
+    linarith
+  -- a.length ≥ 24: need lcm constraint (Cauchy-Schwarz or partitioning)
   sorry
 
 end
