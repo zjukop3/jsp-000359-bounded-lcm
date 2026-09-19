@@ -1,10 +1,10 @@
 import Mathlib.Analysis.PSeries
 import Mathlib.Analysis.Real.Sqrt
+import Mathlib.Data.Finset.Card
+import Mathlib.Data.Finset.Dedup
 import Mathlib.Data.List.Sort
 import Mathlib.Data.Nat.GCD.Basic
 import Mathlib.Data.Real.Basic
-import Mathlib.Data.Finset.Dedup
-import Mathlib.Data.Finset.Card
 import Mathlib.Order.Interval.Finset.Nat
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.GCongr
@@ -239,8 +239,70 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
     push_cast
     have h_len_r : (a.length : ℝ) ≤ 23 := by exact_mod_cast hl24
     linarith
-  -- a.length ≥ 24: need lcm constraint (Cauchy-Schwarz or partitioning)
-  sorry
+  -- a.length ≥ 24: need lcm constraint
+  -- Use: a.length ≤ n (pigeonhole, already have h_len_n)
+  -- For n ≥ 24: need stronger bound than n ≤ 4√n + 4 (which fails for n ≥ 24)
+  -- Key: sq_le_mul_diff_of_lcm gives a_i^2 ≤ n * d_i for each consecutive pair
+  -- Since a_i ≥ 1 (positive), a_i^2 ≥ 1, so d_i ≥ 1/n (trivial)
+  -- But a_i ≥ i+1 (strictly increasing from ≥1), so d_i ≥ (i+1)^2/n
+  -- For the first element after position floor(√n): d grows quadratically
+  -- This forces the sequence to be short relative to n
+  -- Step 1: Prove a_i ≥ i+1 for all i < a.length (from strictly increasing + positive)
+  have h_ai_ge : ∀ (i : ℕ) (hi : i < a.length), i + 1 ≤ a.get ⟨i, hi⟩ := by
+    intro i hi
+    induction i with
+    | zero =>
+      have h0 : 0 < a.get ⟨0, hi⟩ := by
+        have hmem : a.get ⟨0, hi⟩ ∈ a := by simp [List.getElem_mem]
+        exact ha_pos _ hmem
+      exact le_trans (by omega) h0
+    | succ i ih =>
+      have hprev := ih (by omega)
+      have hi' : i < a.length := Nat.lt_of_succ_lt hi
+      have hle_idx : a.get ⟨i + 1, hi⟩ ≥ a.get ⟨i, hi'⟩ :=
+        (ha_sorted.strictMono_get (by omega : i < i + 1)).le
+      have heq : a.get ⟨i + 1, hi⟩ = a.get ⟨i, hi'⟩ + (a.get ⟨i + 1, hi⟩ - a.get ⟨i, hi'⟩) :=
+        (Nat.add_sub_of_le hle_idx).symm
+      rw [heq]
+      have hdi : 1 ≤ a.get ⟨i + 1, hi⟩ - a.get ⟨i, hi'⟩ :=
+        Nat.sub_pos_of_lt (ha_sorted.strictMono_get (by omega : i < i + 1))
+      have := hle_idx
+      nlinarith
+
+  -- Step 2: For each i < a.length - 1, (i+1)^2 ≤ n * d_i
+  have h_sq_bound : ∀ (i : ℕ) (hi : i + 1 < a.length),
+      (i + 1 : ℕ)^2 ≤ n * (a.get ⟨i + 1, hi⟩ - a.get ⟨i, Nat.lt_of_succ_lt hi⟩) := by
+    intro i hi
+    have hi' := Nat.lt_of_succ_lt hi
+    have h_ai_pos : 0 < a.get ⟨i, hi'⟩ := by
+      have hmem : a.get ⟨i, hi'⟩ ∈ a := by simp [List.getElem_mem]
+      exact ha_pos _ hmem
+    have h_ai_lt : a.get ⟨i, hi'⟩ < a.get ⟨i + 1, hi⟩ :=
+      ha_sorted.strictMono_get (by omega : i < i + 1)
+    have h_lcm : Nat.lcm (a.get ⟨i, hi'⟩) (a.get ⟨i + 1, hi⟩) ≤ n := ha_lcm i hi
+    have h_sq := sq_le_mul_diff_of_lcm h_ai_pos h_ai_lt h_lcm
+    have h_ge : (i + 1 : ℕ) ≤ a.get ⟨i, hi'⟩ := h_ai_ge i hi'
+    have h_sq_ge : ((i + 1 : ℕ) : ℝ)^2 ≤ (a.get ⟨i, hi'⟩ : ℝ)^2 := by
+      have hge_r : (i + 1 : ℕ) ≤ a.get ⟨i, hi'⟩ := h_ge
+      have h_nat : (i + 1 : ℕ) * (i + 1) ≤ a.get ⟨i, hi'⟩ * a.get ⟨i, hi'⟩ :=
+        Nat.mul_self_le_mul_self hge_r
+      have h_real : ((i + 1 : ℕ) : ℝ) * ((i + 1 : ℕ) : ℝ) ≤ (a.get ⟨i, hi'⟩ : ℝ) * (a.get ⟨i, hi'⟩ : ℝ) :=
+        by exact_mod_cast h_nat
+      rw [sq, sq]
+      exact h_real
+    exact_mod_cast (le_trans h_sq_ge h_sq)
+
+  -- Step 3: Use h_sq_bound to derive k^3 ≤ 3n^2 + 1
+  -- This requires summing (i+1)^2 over all i, which needs Finset.sum
+  -- Without that, we use a weaker approach:
+  -- For a.length ≥ 24 and n ≥ 24: every element is in [1,n], distinct
+  -- So a.length ≤ n. But n ≥ 24, so n > 4*√n+4 for n ≥ 24
+  -- We need the lcm constraint. The sum argument gives k^3 ≤ 3n^2.
+  -- Without Finset.sum, we can't prove this directly.
+  -- Use interval_cases for small n and sorry for large n.
+  have h_cs : (a.length : ℝ) ≤ 4 * Real.sqrt n + 4 := by
+    sorry
+  exact h_cs
 
 end
 end BoundedLcm
