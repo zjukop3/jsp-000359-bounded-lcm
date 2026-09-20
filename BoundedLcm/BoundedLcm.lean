@@ -1,3 +1,6 @@
+import Mathlib.Algebra.BigOperators.Intervals
+import Mathlib.Algebra.BigOperators.Ring.Finset
+import Mathlib.Algebra.Order.BigOperators.Group.Finset
 import Mathlib.Analysis.PSeries
 import Mathlib.Analysis.Real.Sqrt
 import Mathlib.Data.Finset.Card
@@ -292,15 +295,54 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
       exact h_real
     exact_mod_cast (le_trans h_sq_ge h_sq)
 
-  -- Step 3: Use h_sq_bound to derive k^3 ≤ 3n^2 + 1
-  -- This requires summing (i+1)^2 over all i, which needs Finset.sum
-  -- Without that, we use a weaker approach:
-  -- For a.length ≥ 24 and n ≥ 24: every element is in [1,n], distinct
-  -- So a.length ≤ n. But n ≥ 24, so n > 4*√n+4 for n ≥ 24
-  -- We need the lcm constraint. The sum argument gives k^3 ≤ 3n^2.
-  -- Without Finset.sum, we can't prove this directly.
-  -- Use interval_cases for small n and sorry for large n.
+  -- Step 3: Derive k ≤ 4√n + 4 from h_sq_bound
+  -- We have: for each i, (i+1)^2 ≤ n * d_i where d_i = a_{i+1} - a_i
+  -- And: Σ d_i = a_{last} - a_{first} ≤ n - 1 ≤ n
+  -- So: Σ (i+1)^2 ≤ n * Σ d_i ≤ n^2
+  -- This gives (k-1)k(2k-1)/6 ≤ n^2, so k^3 ≤ 3n^2 (for k ≥ 2)
+  -- Then k ≤ (3n^2)^(1/3) + 1, and (3n^2)^(1/3) ≤ 4√n for n ≥ 24
+  -- But formalizing the sum requires Finset.sum infrastructure
+
+  -- Alternative: use the gap_count lemma
+  -- For i ≥ 0: d_i ≥ (i+1)^2/n
+  -- For i ≥ floor(√n) - 1: d_i ≥ n/n = 1 (trivial, already true)
+  -- For i ≥ floor(√(2n)) - 1: d_i ≥ 2n/n = 2
+  -- For i ≥ floor(√(3n)) - 1: d_i ≥ 3n/n = 3
+  -- ...
+  -- For i ≥ floor(√(m*n)) - 1: d_i ≥ m
+  -- This gives a layered argument similar to the partitioning proof
+
+  -- For now: use interval_cases for small n and native approach for large n
+  -- Key: for n ≤ 600, (3n^2)^(1/3) + 1 ≤ 4√n + 4
+  -- For n ≥ 601: need partitioning argument (gap_count + sum_inv_sq_lt_two)
+
+  -- Simplest approach that avoids Finset.sum:
+  -- Use h_sq_bound to get d_i ≥ 1 for all i (trivial from strictly increasing)
+  -- Use gap_count with g=1: length ≤ n + 1 (trivial)
+  -- This doesn't help. We need the quadratic bound.
+
+  -- Try: prove k ≤ 4√n + 4 directly via:
+  -- 1. k ≤ n (pigeonhole)
+  -- 2. For n ≥ 24, k ≤ n, but n can be > 4√n + 4
+  -- 3. So we need: if k > 4√n + 4, then contradiction with lcm constraint
+
+  -- Use: if k ≥ 25 (since k > 4*√24+4 ≈ 23.6), then:
+  -- Σ d_i ≥ Σ (i+1)^2/n ≥ (1+4+9+...+625)/n = (25*26*51)/6 / n
+  -- = 5525/n ≤ n, so n^2 ≥ 5525, n ≥ 75
+  -- So if k ≥ 25, then n ≥ 75
+  -- And 4*√75 + 4 ≈ 38.6, so k ≤ n ≤ ... still need more
+
+  -- The fundamental issue: without Finset.sum, we can't sum h_sq_bound
+  -- Try using List.sum and List.take instead
+
   have h_cs : (a.length : ℝ) ≤ 4 * Real.sqrt n + 4 := by
+    -- Use Finset.sum to implement the Cauchy-Schwarz sum argument
+    -- For each i in [0, k-2]: (i+1)^2 ≤ n * d_i (from h_sq_bound)
+    -- Sum: Σ (i+1)^2 ≤ n * Σ d_i (from sum_le_sum)
+    -- Σ d_i = a_{k-1} - a_0 ≤ n - 1 (telescoping, pigeonhole)
+    -- So Σ (i+1)^2 ≤ n(n-1) < n^2
+    -- Then (k-1)k(2k-1)/6 ≤ n^2, giving k^3 ≤ 3n^2 (for k ≥ 2)
+    -- k ≤ (3n^2)^(1/3) + 1 ≤ 4√n + 4 for n ≥ 24
     sorry
   exact h_cs
 
