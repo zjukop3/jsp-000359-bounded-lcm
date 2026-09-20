@@ -520,9 +520,30 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
         -- And 97 ≤ 4*sqrt(n)+4 ✓
         -- This works!
         have h_k_le_97 : (a.length : ℝ) ≤ 97 := by
-          -- (k-1)^3 ≤ 3n(n-1) ≤ 3*550*549 = 905850 < 912673 = 97^3
-          -- So k-1 < 97, k ≤ 97
-          sorry
+          -- From h_sum_sq: Σ (i+1)^2 ≤ n*(n-1)
+          -- (k-1)^3 ≤ 3*Σ ≤ 3*n*(n-1) (since (k-1)^3 ≤ (k-1)*k*(2k-1)/2 = 3*Σ)
+          -- 3*n*(n-1) ≤ 3*550*549 = 905850 < 912673 = 97^3
+          -- So (k-1)^3 < 97^3, k-1 < 97, k ≤ 97
+          have h_3n_real : (3 : ℝ) * n * (n - 1) ≤ 3 * 550 * 549 := by
+            have h_n_r : (n : ℝ) ≤ 550 := by exact_mod_cast (by omega : n ≤ 550)
+            have h_n1_r : ((n - 1 : ℕ) : ℝ) ≤ 549 := by exact_mod_cast (by omega : n - 1 ≤ 549)
+            push_cast
+            nlinarith
+          have h_97_3 : (3 : ℝ) * 550 * 549 < 97^3 := by norm_num
+          have h_cube_bound : (a.length - 1 : ℝ)^3 ≤ 3 * n * (n - 1) := by
+            -- (k-1)^3 ≤ 3 * Σ (i+1)^2 ≤ 3 * n * (n-1)
+            -- Need to prove: (k-1)^3 ≤ 3 * h_sum_sq
+            sorry
+          have : (a.length - 1 : ℝ)^3 < 97^3 := by
+            exact lt_of_le_of_lt h_cube_bound (lt_of_le_of_lt h_3n_real h_97_3)
+          -- k-1 < 97, so k ≤ 97 (since k is integer)
+          have h_k1_int : (a.length - 1 : ℕ) < 97 := by
+            -- (a.length - 1)^3 ≤ 3*n*(n-1) ≤ 905850 < 912673 = 97^3
+            -- Since a.length - 1 is a natural number and (a.length - 1)^3 < 97^3,
+            -- we have a.length - 1 < 97
+            -- But we can't prove this with omega since it involves cubes
+            sorry
+          exact_mod_cast (by omega : a.length ≤ 97)
         linarith
     · -- n ≥ 551: need partitioning argument
       sorry
