@@ -1,6 +1,7 @@
 import Mathlib.Algebra.BigOperators.Intervals
 import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
+import Mathlib.Algebra.Order.Ring.Basic
 import Mathlib.Analysis.PSeries
 import Mathlib.Analysis.Real.Sqrt
 import Mathlib.Data.Finset.Card
@@ -456,98 +457,142 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
     -- let's just use sorry for the remaining cases.
 
     by_cases hn550 : n ≤ 550
-    · -- For 24 ≤ n ≤ 550: use h_sum_sq and interval_cases
-      -- From h_sum_sq: Σ (i+1)^2 ≤ n*(n-1)
-      -- Need: k^3 ≤ 6 * n * (n-1) (since (k-1)^3 ≤ (k-1)k(2k-1) = 6*Σ)
-      -- Then k ≤ (6n(n-1))^(1/3) + 1
-      -- For n=550: (6*550*549)^(1/3) = 1811700^(1/3) ≈ 121.9
-      -- 4*√550+4 ≈ 97.8, so 122 > 98 ✗
-      -- Wait, this bound is too weak!
-      -- (k-1)^3 ≤ 3*(k-1)k(2k-1)/6 = 3*Σ (i+1)^2 ≤ 3n(n-1)
-      -- k ≤ (3n(n-1))^(1/3) + 1
-      -- For n=550: (3*550*549)^(1/3) = 905850^(1/3) ≈ 96.7
-      -- 4*√550+4 ≈ 97.8, so 97.7 ≤ 97.8 ✓ (barely!)
-      -- For n=500: (3*500*499)^(1/3) = 748500^(1/3) ≈ 90.8
-      -- 4*√500+4 ≈ 93.4 ✓
-      -- So the bound k ≤ (3n(n-1))^(1/3) + 1 ≤ 4√n + 4 holds for n ≤ 550
-      -- Need to prove: (3n(n-1))^(1/3) + 1 ≤ 4√n + 4
-      -- i.e., 3n(n-1) ≤ (4√n + 3)^3
-      -- Use interval_cases for n ∈ [24, 550]
-      -- But interval_cases can't handle Real.sqrt directly
-      -- Alternative: use the bound k ≤ n (pigeonhole) and
-      -- show n ≤ 4√n + 4 for n ≤ 23 (already done)
-      -- For n ≥ 24: use h_sum_sq to get a better bound
-      -- Since we can't easily prove the cube root inequality,
-      -- use the weaker bound: k² ≤ 2*n*(n-1) (from Σ(i+1) ≥ k(k-1)/2)
-      -- k ≤ √(2n²) + 1 = √2 * n + 1 (too weak for large n)
-      -- Better: use the exact sum formula
-      -- Σ_{j=1}^{k-1} j^2 = (k-1)k(2k-1)/6
-      -- Need: (k-1)k(2k-1)/6 ≤ n(n-1)
-      -- For k ≥ 2: (k-1)^3 ≤ (k-1)k(2k-1)/2 ≤ 3n(n-1)
-      -- k ≤ (3n(n-1))^(1/3) + 1
-      -- Need: (3n(n-1))^(1/3) + 1 ≤ 4√n + 4
-      -- For n=24: (3*24*23)^(1/3)+1 = 1656^(1/3)+1 ≈ 11.8+1 = 12.8
-      -- 4*√24+4 ≈ 23.6 ✓
-      -- For n=550: (3*550*549)^(1/3)+1 ≈ 96.7+1 = 97.7
-      -- 4*√550+4 ≈ 97.8 ✓ (barely!)
-      -- So we need to prove: 3n(n-1) + 1 ≤ (4√n + 4)^3 (approximately)
-      -- This is a numerical inequality that can be verified by interval_cases
-      -- But interval_cases over [24, 550] is too many cases
-      -- Use a coarser approach: split into [24, 100], [101, 200], etc.
-      -- Or: use the fact that 3n(n-1) ≤ 3n² and (4√n+4)³ ≥ 64n√n
-      -- Need: 3n² ≤ 64n√n, i.e., 3√n ≤ 64, i.e., n ≤ (64/3)² ≈ 455
-      -- So for n ≤ 455: 3n² ≤ 64n√n ≤ (4√n)³ ≤ (4√n+4)³
-      -- And (3n²)^(1/3) ≤ 4√n, so k ≤ 4√n + 1 ≤ 4√n + 4 ✓
-      -- For n ∈ [456, 550]: need more careful analysis
-      -- 3*455² = 621075, 64*455*√455 ≈ 64*455*21.33 = 620832
-      -- Actually 3n² = 621075 > 620832, so it fails at n=455!
-      -- More precise: 3n² ≤ (4√n)³ iff 3n² ≤ 64n^(3/2) iff 3√n ≤ 64
-      -- iff n ≤ (64/3)² = 455.1...
-      -- So for n ≤ 455: 3n² ≤ (4√n)³ ≤ (4√n+4)³ ✓
-      -- For n ∈ [456, 550]: need the +3 and +4 terms
-      -- (4√n+4)³ = 64n√n + 192n + 192√n + 64
-      -- 3n² ≤ 64n√n + 192n + 192√n + 64
-      -- For n=456: LHS=624528, RHS≈64*456*21.35+192*456+192*21.35+64
-      -- = 622944+87552+4099+64 = 714659 ✓
-      -- For n=550: LHS=907500, RHS≈64*550*23.45+192*550+192*23.45+64
-      -- = 827040+105600+4502+64 = 937206 ✓
-      -- So it works for n ≤ 550
-      -- But proving 3n² ≤ (4√n+4)³ in Lean requires:
-      -- 1. Expanding (4√n+4)³ = 64n√n + 192n + 192√n + 64
-      -- 2. Showing 3n² ≤ 64n√n + 192n + 192√n + 64
-      -- 3. For n ≤ 455: 3n² ≤ 64n√n (since 3√n ≤ 64)
-      -- 4. For n ≥ 456: 3n² ≤ 64n√n + 192n (since 3n ≤ 64√n + 192)
-      --    3n ≤ 64√n + 192 iff 3n - 192 ≤ 64√n
-      --    For n=456: 3*456-192=1176, 64*√456≈1366 ✓
-      --    For n=550: 3*550-192=1458, 64*√550≈1501 ✓
-      --    This holds for n ≤ ~583
-      -- So: 3n² ≤ 64n√n + 192n for n ≤ 583
-      -- And 64n√n + 192n ≤ (4√n+4)³ always
-      -- So 3n² ≤ (4√n+4)³ for n ≤ 583
-      -- Since we need n ≤ 550, this works!
-      -- But proving 3n ≤ 64√n + 192 in Lean still needs Real.sqrt handling
-      -- Use: 3n ≤ 64√n + 192 iff (3n-192)² ≤ 64² * n (when 3n ≥ 192, i.e., n ≥ 64)
-      -- 9n² - 1152n + 192² ≤ 4096n
-      -- 9n² - 5248n + 36864 ≤ 0
-      -- n ≤ (5248 + √(5248² - 4*9*36864))/(2*9)
-      -- This is getting very messy. Let's just use interval_cases for n ≤ 550.
-      -- Actually, we can use a simpler approach:
-      -- For n ≤ 550: use that k ≤ (3n(n-1))^(1/3) + 1
-      -- and prove (3n(n-1))^(1/3) + 1 ≤ 4√n + 4 by:
-      -- 3n(n-1) ≤ 3n² and (4√n)³ = 64n√n
-      -- Need: 3n² ≤ 64n√n for n ≤ (64/3)² ≈ 455
-      -- For n ≤ 455: (3n²)^(1/3) ≤ (64n√n)^(1/3) = 4√n
-      -- So k ≤ 4√n + 1 ≤ 4√n + 4 ✓
-      -- For n ∈ [456, 550]: need a different bound
-      -- Use: 3n(n-1) ≤ 3n² - 3n (since n ≥ 1)
-      -- and (4√n + 3)³ ≥ 64n√n (since (4√n)³ = 64n√n and +3 adds more)
-      -- Need: 3n² - 3n ≤ 64n√n for n ≥ 456
-      -- 3n - 3 ≤ 64√n
-      -- For n=456: 1365 ≤ 64*21.35 = 1366 ✓
-      -- For n=550: 1647 ≤ 64*23.45 = 1501 ✗
-      -- Fails for n ≥ ~510!
-      -- OK this is getting extremely tedious. Let me just use sorry.
-      sorry
+    · -- For 24 ≤ n ≤ 550: use Cauchy-Schwarz + numerical inequality
+      -- Strategy: for each n, find a lower bound on sqrt(n) (using perfect squares)
+      -- and prove 3n(n-1) ≤ (4*sqrt(n)+3)^3
+      -- Key technique: sqrt(16) = 4, sqrt(25) = 5, sqrt(36) = 6, etc.
+      -- For n in [k², (k+1)²), sqrt(n) ≥ k
+      -- So 4*sqrt(n)+3 ≥ 4k+3, and (4k+3)^3 ≥ 3n(n-1)
+      -- Need to find k = floor(sqrt(n)) and verify 3n(n-1) ≤ (4k+3)^3
+      -- For n=24: k=4 (since 16≤24<25), (4*4+3)^3 = 19^3 = 6859, 3*24*23=1656 ✓
+      -- For n=100: k=10, (43)^3=79507, 3*100*99=29700 ✓
+      -- For n=550: k=23 (since 529≤550<576), (4*23+3)^3=95^3=857375, 3*550*549=905850
+      -- 905850 > 857375 ✗! So this approach fails for n=550!
+      -- Need a better approach for larger n
+
+      -- Actually, the issue is that (4k+3)^3 grows as 64k^3 while 3n(n-1) grows as 3n²
+      -- For n ≈ k², this is 64k³ vs 3k⁴, which fails for k ≥ 64/3 ≈ 21
+      -- So for k ≥ 22 (n ≥ 484): (4k+3)^3 < 3k^4 ≈ 3n²
+      -- This means the lower bound sqrt(n) ≥ k is too weak for large n
+
+      -- Better: use sqrt(n) ≥ k + 1/4 (approximately)
+      -- Or: use a finer partition, e.g. sqrt(24) ≥ sqrt(16) = 4
+      -- and then verify the numerical inequality directly
+
+      -- The simplest approach: use interval_cases with a manageable range
+      -- For n ≤ 100: interval_cases with sqrt bounds from perfect squares
+      -- For n ∈ [101, 550]: need more work
+
+      -- Actually, let me try a completely different approach:
+      -- Use the fact that (3n(n-1))^(1/3) ≤ 4*sqrt(n) + 3
+      -- i.e., 3n(n-1) ≤ (4*sqrt(n)+3)^3
+      -- For n ≤ 455: 3n² ≤ 64*n*sqrt(n) (since 3*sqrt(n) ≤ 64, sqrt(n) ≤ 64/3 ≈ 21.3, n ≤ 455)
+      -- And 64*n*sqrt(n) = (4*sqrt(n))^3 ≤ (4*sqrt(n)+3)^3
+      -- So 3n(n-1) ≤ 3n² ≤ (4*sqrt(n))^3 ≤ (4*sqrt(n)+3)^3 for n ≤ 455
+
+      -- For n ≤ 455: prove 3*sqrt(n) ≤ 64
+      -- sqrt(n) ≤ sqrt(455) ≤ sqrt(484) = 22
+      -- 3*22 = 66 > 64 ✗! So sqrt(455) ≤ 22 gives 3*22=66 > 64
+      -- Need n ≤ (64/3)^2 = 455.1... but sqrt(455) > 64/3
+      -- So use sqrt(455) ≤ sqrt(484) = 22, and 3*22 = 66 > 64
+      -- This doesn't work with perfect square bounds!
+
+      -- Alternative: use n ≤ 441 (since sqrt(441) = 21, 3*21 = 63 ≤ 64)
+      -- For n ≤ 441: sqrt(n) ≤ 21, 3*sqrt(n) ≤ 63 ≤ 64
+      -- 3n² ≤ 64*n*sqrt(n) (dividing by n: 3n ≤ 64*sqrt(n), i.e., 3*sqrt(n) ≤ 64)
+      -- For n ≤ 441: 3*21 = 63 ≤ 64 ✓
+      -- So 3n(n-1) ≤ 3n² ≤ 64*n*sqrt(n) = (4*sqrt(n))^3 ≤ (4*sqrt(n)+3)^3
+
+      -- For n ∈ [442, 550]: need a different argument
+      -- sqrt(442) ≥ 21, (4*21+3)^3 = 87^3 = 658503
+      -- 3*442*441 = 585186 ≤ 658503 ✓
+      -- sqrt(484) = 22, (4*22+3)^3 = 91^3 = 753571
+      -- 3*484*483 = 701556 ≤ 753571 ✓
+      -- sqrt(529) = 23, (4*23+3)^3 = 95^3 = 857375
+      -- 3*529*528 = 837936 ≤ 857375 ✓
+      -- sqrt(550) ≥ 23, (4*23+3)^3 = 95^3 = 857375
+      -- 3*550*549 = 905850 > 857375 ✗!
+      -- Fails for n ≥ ~539!
+
+      -- So the approach using perfect square lower bounds fails for n ≥ 539
+      -- For n ∈ [539, 550]: need sqrt(n) ≥ 23.2 (approximately)
+      -- But we can only prove sqrt(n) ≥ 23 (from sqrt(529) = 23)
+
+      -- For these few cases (n ∈ [539, 550], only 12 values):
+      -- Use interval_cases with a more precise sqrt bound
+      -- sqrt(539) ≥ sqrt(529) = 23, so 4*sqrt(539)+3 ≥ 95
+      -- 3*539*538 = 870186 > 857375 = 95^3 ✗
+      -- sqrt(539) ≥ 23.2 (approximately), but we can't prove this easily
+
+      -- The fundamental issue: for n near 550, the Cauchy-Schwarz bound is
+      -- very tight and requires high-precision sqrt bounds.
+
+      -- Given the extreme difficulty, let's use a simpler bound:
+      -- For n ≤ 441: use sqrt(n) ≤ 21 (perfect square bound)
+      -- This gives 3n² ≤ 63n*sqrt(n) < 64n*sqrt(n) = (4*sqrt(n))^3
+      -- So k ≤ (3n²)^(1/3) < 4*sqrt(n) ≤ 4*sqrt(n) + 4 ✓
+
+      -- For n ∈ [442, 550]: use interval_cases with explicit computation
+      -- But interval_cases over [442, 550] = 109 cases might be slow
+      -- Use a coarser bound: for n ≤ 550, sqrt(n) ≤ sqrt(576) = 24
+      -- (4*24+4)^3 = 100^3 = 1000000
+      -- 3*550*549 = 905850 ≤ 1000000 ✓
+      -- So if we can prove k ≤ (905850)^(1/3) + 1 ≤ 97 ≤ 100 = 4*24+4
+      -- But we need 4*sqrt(n)+4, not 4*24+4
+      -- For n ≤ 550: 4*sqrt(n)+4 ≤ 4*sqrt(576)+4 = 4*24+4 = 100
+      -- And (3*550*549)^(1/3) + 1 ≤ 97 ≤ 100 ✓
+      -- But this proves k ≤ 100, not k ≤ 4*sqrt(n)+4
+      -- For n=24: 4*sqrt(24)+4 ≈ 23.6, and 100 > 23.6, so k ≤ 100 doesn't help
+
+      -- The right approach: for each n, use the exact value of 4*sqrt(n)+4
+      -- and prove k ≤ that value
+      -- Since we can't compute 4*sqrt(n)+4 exactly for non-perfect-square n,
+      -- use a lower bound: 4*floor(sqrt(n))+4 (since sqrt(n) ≥ floor(sqrt(n)))
+      -- Wait, we need an UPPER bound on k, so we need k ≤ 4*sqrt(n)+4
+      -- If sqrt(n) ≥ m (some integer), then 4*sqrt(n)+4 ≥ 4m+4
+      -- So it suffices to prove k ≤ 4m+4 where m = floor(sqrt(n))
+      -- And k ≤ (3n(n-1))^(1/3) + 1
+      -- So need: (3n(n-1))^(1/3) + 1 ≤ 4m+4
+      -- i.e., 3n(n-1) ≤ (4m+3)^3
+
+      -- For n ∈ [m², (m+1)²): m = floor(sqrt(n)), sqrt(n) ≥ m
+      -- Need: 3n(n-1) ≤ (4m+3)^3 for all n ∈ [m², (m+1)²-1]
+
+      -- For m=4 (n ∈ [16,24]): 3*24*23 = 1656, (4*4+3)^3 = 19^3 = 6859 ✓
+      -- For m=5 (n ∈ [25,35]): 3*35*34 = 3570, (4*5+3)^3 = 23^3 = 12167 ✓
+      -- For m=10 (n ∈ [100,120]): 3*120*119 = 42840, (4*10+3)^3 = 43^3 = 79507 ✓
+      -- For m=20 (n ∈ [400,440]): 3*440*439 = 579480, (4*20+3)^3 = 83^3 = 571787
+      -- 579480 > 571787 ✗! Fails for m=20!
+
+      -- So this approach fails for m ≥ 20 (n ≥ 400).
+      -- For m=19 (n ∈ [361,399]): 3*399*398 = 476406, (4*19+3)^3 = 79^3 = 493039 ✓
+      -- For m=20: need 3*440*439 ≤ 83^3 = 571787, but 579480 > 571787 ✗
+
+      -- So the approach works for n ≤ 399 (m ≤ 19) but fails for n ≥ 400.
+      -- For n ∈ [400, 550]: need a more refined bound
+
+      -- Given all this analysis, the most practical approach is:
+      -- Use interval_cases for n ≤ 399 (where the perfect square bound works)
+      -- and sorry for n ∈ [400, 550]
+
+      by_cases hn399 : n ≤ 399
+      · -- For 24 ≤ n ≤ 399: use perfect square lower bound on sqrt(n)
+        -- m = floor(sqrt(n)), sqrt(n) ≥ m
+        -- (4*sqrt(n)+3)^3 ≥ (4m+3)^3
+        -- Need: 3n(n-1) ≤ (4m+3)^3
+        -- Use interval_cases on m (m ranges from 4 to 19)
+        -- But we need to connect n to m
+        -- Use: if n < (m+1)^2, then sqrt(n) < m+1, so m = floor(sqrt(n))
+        -- Actually: for n in [m², (m+1)²-1], sqrt(n) ≥ m
+        -- And 3n(n-1) ≤ 3*((m+1)²-1)*((m+1)²-2) for n ≤ (m+1)²-1
+        -- Need: 3*((m+1)²-1)*((m+1)²-2) ≤ (4m+3)^3 for m = 4,...,19
+        -- m=19: 3*(400-1)*(400-2) = 3*399*398 = 476406, (79)^3 = 493039 ✓
+        -- m=4: 3*(25-1)*(25-2) = 3*24*23 = 1656, (19)^3 = 6859 ✓
+        -- So for m ∈ [4, 19]: the inequality holds
+        -- Use interval_cases on m
+        sorry
+      · -- For n ∈ [400, 550]: need more work
+        sorry
     · -- For n ≥ 551: need partitioning argument
       sorry
   exact h_cs
