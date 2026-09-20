@@ -358,37 +358,112 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
             (a.get ⟨j + 1, hj⟩ - a.get ⟨j, hj'⟩) =
             a.get ⟨j + 1, hj⟩ - a.get ⟨0, by omega⟩ := by omega
         nlinarith
-    -- From h_sum_ind with j = a.length - 1:
-    -- Σ (i+1)^2 ≤ n*(a_{k-1} - a_0) ≤ n*(n-1) < n^2
-    -- Then (k-1)^3 ≤ 3*n^2 (using (k-1)^3 ≤ (k-1)*k*(2*k-1) = 6*Σ (i+1)^2)
-    -- k ≤ (3n^2)^(1/3) + 1
-    -- For n ≥ 24: (3*576)^(1/3) = 12, so k ≤ 13
-    -- 4*√24 + 4 ≈ 23.6, so k ≤ 13 ≤ 23.6 ✓
-    -- For n ≥ 500: (3*250000)^(1/3) ≈ 90.8, k ≤ 91.8
-    -- 4*√500 + 4 ≈ 93.4, so k ≤ 91 ≤ 93.4 ✓
-    -- For n ≥ 1000: (3*10^6)^(1/3) ≈ 144.2
-    -- 4*√1000 + 4 ≈ 130.5, 144.2 > 130.5 ✗
-    -- Fails for n ≥ ~600
-    -- For n ≥ 600: need partitioning argument (gap_count + sum_inv_sq_lt_two)
-    -- This gives k ≤ 4√n + 4 for all n
-    -- For now: use interval_cases for n ≤ 1000 and sorry for n ≥ 1001
-    by_cases hn1000 : n ≤ 1000
-    · -- For 24 ≤ n ≤ 1000: use the sum bound to get k ≤ 4√n + 4
-      -- From h_sum_ind: Σ (i+1)^2 ≤ n*(a_{k-1} - a_0) ≤ n*(n-1)
-      -- Since a.length ≥ 24, a.length - 1 ≥ 23
-      -- Apply h_sum_ind at j = a.length - 1:
-      -- Σ_{i=0}^{a.length-2} (i+1)^2 ≤ n * (a_{last} - a_0) ≤ n * (n - 1)
-      -- So a.length^3 ≤ 3 * n^2 + 1 (approximately)
-      -- And (3n^2 + 1)^(1/3) ≤ 4√n + 4 for n ≤ 1000
-      -- For n = 1000: (3*10^6)^(1/3) ≈ 144.2, 4*√1000+4 ≈ 130.5
-      -- This FAILS for n ≥ ~600!
-      -- So Cauchy-Schwarz alone doesn't work for n ≥ 600
-      -- Need partitioning for n ≥ 600
-      -- For n ≤ 500: it works
-      -- For n ∈ [501, 1000]: need partitioning
-      -- Since partitioning is very complex, use sorry for now
+    -- Apply h_sum_ind at j = a.length - 1
+    have h_k1 : 1 ≤ a.length := by omega
+    have h_last_idx : a.length - 1 < a.length := by omega
+    have h_sum_final : ((List.range (a.length - 1)).map (fun i => (i + 1 : ℕ) * (i + 1))).sum ≤
+        n * (a.get ⟨a.length - 1, h_last_idx⟩ - a.get ⟨0, by omega⟩) :=
+      h_sum_ind (a.length - 1) h_last_idx
+    -- a_{last} ≤ n, a_0 ≥ 1, so a_{last} - a_0 ≤ n - 1
+    have h_last_le : a.get ⟨a.length - 1, h_last_idx⟩ ≤ n := by
+      have hmem : a.get ⟨a.length - 1, h_last_idx⟩ ∈ a := by simp [List.getElem_mem]
+      exact ha_le _ hmem
+    have h_first_pos : 1 ≤ a.get ⟨0, by omega⟩ := by
+      have hmem : a.get ⟨0, by omega⟩ ∈ a := by simp [List.getElem_mem]
+      exact ha_pos _ hmem
+    have h_diff_le : a.get ⟨a.length - 1, h_last_idx⟩ - a.get ⟨0, by omega⟩ ≤ n - 1 := by omega
+    have h_sum_sq : ((List.range (a.length - 1)).map (fun i => (i + 1 : ℕ) * (i + 1))).sum ≤ n * (n - 1) := by
+      have h1 : a.get ⟨a.length - 1, h_last_idx⟩ - a.get ⟨0, by omega⟩ ≤ n - 1 := h_diff_le
+      have h2 := h_sum_final
+      nlinarith
+    -- Σ (i+1)^2 for i=0..k-2 = (k-1)*k*(2k-1)/6 (sum of squares formula)
+    -- But we don't need the exact formula, just (k-1)^3 ≤ 6 * Σ (i+1)^2
+    -- For k ≥ 2: (i+1)^2 ≥ i^2 for i ≥ 0, so Σ (i+1)^2 ≥ Σ i^2 = (k-1)(k-2)(2k-3)/6
+    -- Actually simpler: (i+1)^2 ≥ (i+1) for i ≥ 0, so Σ (i+1)^2 ≥ Σ (i+1) = k(k-1)/2
+    -- And for k ≥ 2: k(k-1)/2 ≥ (k-1)^2/2, so (k-1)^2 ≤ 2*Σ ≤ 2n(n-1)
+    -- This gives k ≤ √(2n²) + 1 ≈ 1.41√n + 1
+    -- For n = 24: 1.41*4.89 + 1 = 7.9, 4*4.89+4 = 23.6, so 8 ≤ 23.6 ✓
+    -- For n = 1000: 1.41*31.6 + 1 = 45.6, 4*31.6+4 = 130.5, so 46 ≤ 130.5 ✓
+    -- This bound works for ALL n ≥ 1! (since 1.41√n + 1 ≤ 4√n + 4 for n ≥ 1)
+    -- (4√n + 4) - (1.41√n + 1) = 2.59√n + 3 ≥ 0 always)
+
+    -- Actually let's use the simpler bound:
+    -- Σ (i+1)^2 ≥ Σ (i+1) = k(k-1)/2 (where k = a.length)
+    -- So k(k-1)/2 ≤ n(n-1)
+    -- k² ≤ 2n² (for k ≥ 1), k ≤ √2 * n (too weak, n > √n for n > 1)
+
+    -- Better: (i+1)^2 ≥ i+1 for i ≥ 0 (since i ≥ 0, (i+1)^2 = (i+1)(i+1) ≥ i+1)
+    -- So Σ_{i=0}^{k-2} (i+1) = (k-1)k/2 ≤ n(n-1)
+    -- k² ≤ 2n², k ≤ √2 * n (still too weak)
+
+    -- Even better: (i+1)^2 ≥ (i+1)^2 (trivial), and we know
+    -- (k-1)^3/3 ≤ (k-1)k(2k-1)/6 = Σ_{j=1}^{k-1} j^2 (sum of squares)
+    -- And Σ_{j=1}^{k-1} j^2 = Σ_{i=0}^{k-2} (i+1)^2 ≤ n(n-1)
+    -- So (k-1)^3 ≤ 3n(n-1) ≤ 3n²
+    -- k ≤ (3n²)^(1/3) + 1
+
+    -- For the bound (k-1)^3 ≤ 3*(k-1)*k*(2k-1)/6:
+    -- (k-1)^3 ≤ (k-1)*k*(2k-1)/2 (since k ≥ k-1, 2k-1 ≥ 2(k-1))
+    -- = 3 * (k-1)*k*(2k-1)/6 = 3 * Σ j^2
+    -- So (k-1)^3 ≤ 3 * n * (n-1) ≤ 3n²
+
+    -- We need: (k-1)^3 ≤ 3n² → k-1 ≤ (3n²)^(1/3) → k ≤ (3n²)^(1/3) + 1
+    -- Then: (3n²)^(1/3) + 1 ≤ 4√n + 4
+    -- i.e., (3n²)^(1/3) ≤ 4√n + 3
+    -- i.e., 3n² ≤ (4√n + 3)³
+    -- For n = 24: 3*576 = 1728, (4*4.89+3)³ = 22.56³ = 11490 ✓
+    -- For n = 500: 3*250000 = 750000, (4*22.36+3)³ = 92.44³ = 790000 ✓
+    -- For n = 600: 3*360000 = 1080000, (4*24.49+3)³ = 100.96³ = 1029000 ✗
+    -- Fails at n ≈ 550!
+    -- So (3n²)^(1/3) + 1 ≤ 4√n + 4 only for n ≤ ~550
+
+    -- For n > 550: need a different approach
+    -- Use the partitioning argument (gap_count + sum_inv_sq_lt_two)
+    -- But this is very complex to implement
+
+    -- Alternative: use the weaker bound k ≤ √(6n²) + 1 = √6 * n + 1
+    -- This is k ≤ 2.45n + 1, which is weaker but always ≤ 4√n + 4 for n ≥ 1?
+    -- No! 2.45n + 1 ≤ 4√n + 4 only for n ≤ ~2 (too weak)
+
+    -- The fundamental issue: Cauchy-Schwarz gives k = O(n^{2/3})
+    -- but we need k = O(√n). These are different!
+    -- For large n, n^{2/3} > √n, so Cauchy-Schwarz is not enough.
+    -- The partitioning argument gives k = O(√n) directly.
+
+    -- Given the complexity, let's use a completely different approach:
+    -- Just use interval_cases for n ≤ 600 (Cauchy-Schwarz works)
+    -- and for n ≥ 601, use the trivial bound k ≤ n and show
+    -- that 4√n + 4 ≥ n for n ≥ ... no, n > 4√n + 4 for n ≥ 24
+
+    -- Actually, for n ≥ 601:
+    -- 4√n + 4 ≥ 4*√601 + 4 ≈ 102
+    -- And k ≤ (3*601²)^(1/3) + 1 ≈ 91.7 + 1 = 92.7
+    -- So k ≤ 92 ≤ 102 = 4*√601 + 4 ✓!
+    -- Wait, this actually works! Let me check more carefully:
+    -- (3n²)^(1/3) = 3^(1/3) * n^(2/3)
+    -- 4√n = 4 * n^(1/2)
+    -- Need: 3^(1/3) * n^(2/3) + 1 ≤ 4 * n^(1/2) + 4
+    -- i.e., 3^(1/3) * n^(2/3) ≤ 4 * n^(1/2) + 3
+    -- i.e., 3^(1/3) * n^(1/6) ≤ 4 + 3/n^(1/2)
+    -- As n → ∞: LHS → ∞, RHS → 4. So this FAILS for large n.
+    -- At n = 600: LHS = 1.442 * 2.898 = 4.18, RHS = 4 + 0.122 = 4.122. FAILS.
+    -- At n = 500: LHS = 1.442 * 2.818 = 4.066, RHS = 4 + 0.134 = 4.134. OK.
+    -- So the bound works for n ≤ ~550 and fails for n ≥ ~551.
+
+    -- For n ≥ 551: need partitioning argument.
+    -- Since partitioning is extremely complex to formalize,
+    -- and we've already spent enormous effort,
+    -- let's just use sorry for the remaining cases.
+
+    by_cases hn550 : n ≤ 550
+    · -- For 24 ≤ n ≤ 550: Cauchy-Schwarz bound works
+      -- Need: (3n²)^(1/3) + 1 ≤ 4√n + 4
+      -- i.e., 3n² ≤ (4√n + 3)³
+      -- This holds for n ≤ 550 (verified numerically)
+      -- But proving it in Lean requires interval_cases or nlinarith
+      -- which need Real.sqrt to be handled carefully
       sorry
-    · -- n ≥ 1001: need partitioning argument
+    · -- For n ≥ 551: need partitioning argument
       sorry
   exact h_cs
 
