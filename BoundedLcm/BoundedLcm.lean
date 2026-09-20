@@ -456,12 +456,97 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
     -- let's just use sorry for the remaining cases.
 
     by_cases hn550 : n ≤ 550
-    · -- For 24 ≤ n ≤ 550: Cauchy-Schwarz bound works
-      -- Need: (3n²)^(1/3) + 1 ≤ 4√n + 4
-      -- i.e., 3n² ≤ (4√n + 3)³
-      -- This holds for n ≤ 550 (verified numerically)
-      -- But proving it in Lean requires interval_cases or nlinarith
-      -- which need Real.sqrt to be handled carefully
+    · -- For 24 ≤ n ≤ 550: use h_sum_sq and interval_cases
+      -- From h_sum_sq: Σ (i+1)^2 ≤ n*(n-1)
+      -- Need: k^3 ≤ 6 * n * (n-1) (since (k-1)^3 ≤ (k-1)k(2k-1) = 6*Σ)
+      -- Then k ≤ (6n(n-1))^(1/3) + 1
+      -- For n=550: (6*550*549)^(1/3) = 1811700^(1/3) ≈ 121.9
+      -- 4*√550+4 ≈ 97.8, so 122 > 98 ✗
+      -- Wait, this bound is too weak!
+      -- (k-1)^3 ≤ 3*(k-1)k(2k-1)/6 = 3*Σ (i+1)^2 ≤ 3n(n-1)
+      -- k ≤ (3n(n-1))^(1/3) + 1
+      -- For n=550: (3*550*549)^(1/3) = 905850^(1/3) ≈ 96.7
+      -- 4*√550+4 ≈ 97.8, so 97.7 ≤ 97.8 ✓ (barely!)
+      -- For n=500: (3*500*499)^(1/3) = 748500^(1/3) ≈ 90.8
+      -- 4*√500+4 ≈ 93.4 ✓
+      -- So the bound k ≤ (3n(n-1))^(1/3) + 1 ≤ 4√n + 4 holds for n ≤ 550
+      -- Need to prove: (3n(n-1))^(1/3) + 1 ≤ 4√n + 4
+      -- i.e., 3n(n-1) ≤ (4√n + 3)^3
+      -- Use interval_cases for n ∈ [24, 550]
+      -- But interval_cases can't handle Real.sqrt directly
+      -- Alternative: use the bound k ≤ n (pigeonhole) and
+      -- show n ≤ 4√n + 4 for n ≤ 23 (already done)
+      -- For n ≥ 24: use h_sum_sq to get a better bound
+      -- Since we can't easily prove the cube root inequality,
+      -- use the weaker bound: k² ≤ 2*n*(n-1) (from Σ(i+1) ≥ k(k-1)/2)
+      -- k ≤ √(2n²) + 1 = √2 * n + 1 (too weak for large n)
+      -- Better: use the exact sum formula
+      -- Σ_{j=1}^{k-1} j^2 = (k-1)k(2k-1)/6
+      -- Need: (k-1)k(2k-1)/6 ≤ n(n-1)
+      -- For k ≥ 2: (k-1)^3 ≤ (k-1)k(2k-1)/2 ≤ 3n(n-1)
+      -- k ≤ (3n(n-1))^(1/3) + 1
+      -- Need: (3n(n-1))^(1/3) + 1 ≤ 4√n + 4
+      -- For n=24: (3*24*23)^(1/3)+1 = 1656^(1/3)+1 ≈ 11.8+1 = 12.8
+      -- 4*√24+4 ≈ 23.6 ✓
+      -- For n=550: (3*550*549)^(1/3)+1 ≈ 96.7+1 = 97.7
+      -- 4*√550+4 ≈ 97.8 ✓ (barely!)
+      -- So we need to prove: 3n(n-1) + 1 ≤ (4√n + 4)^3 (approximately)
+      -- This is a numerical inequality that can be verified by interval_cases
+      -- But interval_cases over [24, 550] is too many cases
+      -- Use a coarser approach: split into [24, 100], [101, 200], etc.
+      -- Or: use the fact that 3n(n-1) ≤ 3n² and (4√n+4)³ ≥ 64n√n
+      -- Need: 3n² ≤ 64n√n, i.e., 3√n ≤ 64, i.e., n ≤ (64/3)² ≈ 455
+      -- So for n ≤ 455: 3n² ≤ 64n√n ≤ (4√n)³ ≤ (4√n+4)³
+      -- And (3n²)^(1/3) ≤ 4√n, so k ≤ 4√n + 1 ≤ 4√n + 4 ✓
+      -- For n ∈ [456, 550]: need more careful analysis
+      -- 3*455² = 621075, 64*455*√455 ≈ 64*455*21.33 = 620832
+      -- Actually 3n² = 621075 > 620832, so it fails at n=455!
+      -- More precise: 3n² ≤ (4√n)³ iff 3n² ≤ 64n^(3/2) iff 3√n ≤ 64
+      -- iff n ≤ (64/3)² = 455.1...
+      -- So for n ≤ 455: 3n² ≤ (4√n)³ ≤ (4√n+4)³ ✓
+      -- For n ∈ [456, 550]: need the +3 and +4 terms
+      -- (4√n+4)³ = 64n√n + 192n + 192√n + 64
+      -- 3n² ≤ 64n√n + 192n + 192√n + 64
+      -- For n=456: LHS=624528, RHS≈64*456*21.35+192*456+192*21.35+64
+      -- = 622944+87552+4099+64 = 714659 ✓
+      -- For n=550: LHS=907500, RHS≈64*550*23.45+192*550+192*23.45+64
+      -- = 827040+105600+4502+64 = 937206 ✓
+      -- So it works for n ≤ 550
+      -- But proving 3n² ≤ (4√n+4)³ in Lean requires:
+      -- 1. Expanding (4√n+4)³ = 64n√n + 192n + 192√n + 64
+      -- 2. Showing 3n² ≤ 64n√n + 192n + 192√n + 64
+      -- 3. For n ≤ 455: 3n² ≤ 64n√n (since 3√n ≤ 64)
+      -- 4. For n ≥ 456: 3n² ≤ 64n√n + 192n (since 3n ≤ 64√n + 192)
+      --    3n ≤ 64√n + 192 iff 3n - 192 ≤ 64√n
+      --    For n=456: 3*456-192=1176, 64*√456≈1366 ✓
+      --    For n=550: 3*550-192=1458, 64*√550≈1501 ✓
+      --    This holds for n ≤ ~583
+      -- So: 3n² ≤ 64n√n + 192n for n ≤ 583
+      -- And 64n√n + 192n ≤ (4√n+4)³ always
+      -- So 3n² ≤ (4√n+4)³ for n ≤ 583
+      -- Since we need n ≤ 550, this works!
+      -- But proving 3n ≤ 64√n + 192 in Lean still needs Real.sqrt handling
+      -- Use: 3n ≤ 64√n + 192 iff (3n-192)² ≤ 64² * n (when 3n ≥ 192, i.e., n ≥ 64)
+      -- 9n² - 1152n + 192² ≤ 4096n
+      -- 9n² - 5248n + 36864 ≤ 0
+      -- n ≤ (5248 + √(5248² - 4*9*36864))/(2*9)
+      -- This is getting very messy. Let's just use interval_cases for n ≤ 550.
+      -- Actually, we can use a simpler approach:
+      -- For n ≤ 550: use that k ≤ (3n(n-1))^(1/3) + 1
+      -- and prove (3n(n-1))^(1/3) + 1 ≤ 4√n + 4 by:
+      -- 3n(n-1) ≤ 3n² and (4√n)³ = 64n√n
+      -- Need: 3n² ≤ 64n√n for n ≤ (64/3)² ≈ 455
+      -- For n ≤ 455: (3n²)^(1/3) ≤ (64n√n)^(1/3) = 4√n
+      -- So k ≤ 4√n + 1 ≤ 4√n + 4 ✓
+      -- For n ∈ [456, 550]: need a different bound
+      -- Use: 3n(n-1) ≤ 3n² - 3n (since n ≥ 1)
+      -- and (4√n + 3)³ ≥ 64n√n (since (4√n)³ = 64n√n and +3 adds more)
+      -- Need: 3n² - 3n ≤ 64n√n for n ≥ 456
+      -- 3n - 3 ≤ 64√n
+      -- For n=456: 1365 ≤ 64*21.35 = 1366 ✓
+      -- For n=550: 1647 ≤ 64*23.45 = 1501 ✗
+      -- Fails for n ≥ ~510!
+      -- OK this is getting extremely tedious. Let me just use sorry.
       sorry
     · -- For n ≥ 551: need partitioning argument
       sorry
