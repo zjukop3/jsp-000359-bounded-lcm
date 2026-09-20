@@ -432,119 +432,180 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
     -- This works for n ≤ 543 (Nat.sqrt gives enough precision)
     -- For n ∈ [544, 550]: use Real.sqrt(n) ≥ 93/4
 
-    by_cases hn550 : n ≤ 550
-    · -- n ≤ 550
-      by_cases hn543 : n ≤ 543
-      · -- n ≤ 543: Nat.sqrt bound works
-        -- (k-1)^3 ≤ 3n(n-1) ≤ (4*Nat.sqrt(n)+4)^3 ≤ (4*Real.sqrt(n)+4)^3
-        -- So k ≤ 4*Real.sqrt(n)+4
-        -- Use interval_cases on n with ranges
-        interval_cases n <;>
-          { -- For each n in [24, 543]:
-            -- 1. (k-1)^3 ≤ 3*n*(n-1) (from h_sum_sq)
-            -- 2. 3*n*(n-1) ≤ (4*Nat.sqrt(n)+4)^3
-            -- 3. (4*Nat.sqrt(n)+4)^3 ≤ (4*Real.sqrt(n)+4)^3 (since Real.sqrt ≥ Nat.sqrt)
-            -- 4. So (k-1)^3 ≤ (4*Real.sqrt(n)+4)^3, k ≤ 4*Real.sqrt(n)+4
-            sorry }
-      · -- n ∈ [544, 550]: use Real.sqrt(n) ≥ 93/4
-        -- (93/4)^2 = 8649/16 = 540.5625 ≤ 544 ≤ n
-        -- So sqrt(n) ≥ 93/4, 4*sqrt(n)+4 ≥ 97
-        -- (k-1)^3 ≤ 3n(n-1) ≤ 3*550*549 = 905850 ≤ 912673 = 97^3
-        -- So k-1 ≤ 96, k ≤ 97 ≤ 4*sqrt(n)+4
-        have h_sqrt : (93 / 4 : ℝ) ≤ Real.sqrt n := by
-          have h_n_ge : (544 : ℝ) ≤ n := by exact_mod_cast (by omega : 544 ≤ n)
-          have h_sq : (93/4 : ℝ)^2 = 8649/16 := by norm_num
-          have h_le : (8649/16 : ℝ) ≤ 544 := by norm_num
-          have h_chain : (93/4 : ℝ)^2 ≤ n := by
-            rw [h_sq]; linarith
-          -- sqrt(x) ≥ y when y ≥ 0 and y^2 ≤ x
-          -- Use: Real.sqrt_le_sqrt gives sqrt(a) ≤ sqrt(b) when a ≤ b
-          -- We need: y ≤ sqrt(x), i.e., sqrt(y^2) ≤ sqrt(x), i.e., y^2 ≤ x
-          have h_y_pos : (0 : ℝ) ≤ 93/4 := by norm_num
-          have h_y_sqrt : Real.sqrt ((93/4 : ℝ)^2) = 93/4 := by
+    -- Strategy:
+    -- 1. n ∈ [24, 509]: native_decide verifies 3*n*(n-1) < (4*Nat.sqrt(n)+4)^3
+    -- 2. n ∈ [510, 528]: sqrt ≥ 91/4, 4*sqrt+4 ≥ 95, 3n(n-1) ≤ 834768 < 95³ = 857375
+    -- 3. n ∈ [529, 540]: sqrt ≥ 23, 4*sqrt+4 ≥ 96, 3n(n-1) ≤ 873180 < 96³ = 884736
+    -- 4. n ∈ [541, 550]: sqrt ≥ 93/4, 4*sqrt+4 ≥ 97, 3n(n-1) ≤ 905850 < 97³ = 912673
+    -- 5. n ≥ 551: sorry (partitioning argument needed)
+
+    -- Key lemma: m^3 ≤ 3 * Σ_{j=1}^{m} j^2 (by induction)
+    have h_cube_le_3sum : ∀ (m : ℕ), m^3 ≤ 3 * ((List.range m).map (fun i => (i+1 : ℕ) * (i+1))).sum := by
+      intro m
+      induction m with
+      | zero => simp [List.range]
+      | succ m ih =>
+        rw [List.range_succ, List.map_append, List.map_singleton, List.sum_append, List.sum_singleton]
+        nlinarith
+
+    by_cases hn509 : n ≤ 509
+    · -- n ∈ [24, 509]: use native_decide to verify 3*n*(n-1) < (4*Nat.sqrt(n)+4)^3
+      -- This is a pure ℕ proposition, verifiable by native_decide
+      have h_native : 3 * n * (n - 1) < (4 * Nat.sqrt n + 4)^3 := by
+        native_decide
+      -- (k-1)^3 ≤ 3*h_sum_sq ≤ 3*n*(n-1) < (4*Nat.sqrt(n)+4)^3 ≤ (4*Real.sqrt(n)+4)^3
+      have h_cube_le : (a.length - 1 : ℕ)^3 ≤ 3 * ((List.range (a.length - 1)).map (fun i => (i+1 : ℕ) * (i+1))).sum :=
+        h_cube_le_3sum (a.length - 1)
+      have h_3sum_le : 3 * ((List.range (a.length - 1)).map (fun i => (i+1 : ℕ) * (i+1))).sum ≤ 3 * n * (n - 1) := by
+        have := h_sum_sq
+        omega
+      have h_k_cube_lt : (a.length - 1 : ℕ)^3 < (4 * Nat.sqrt n + 4)^3 := by
+        omega
+      have h_nat_cube_le_real : (4 * Nat.sqrt n + 4 : ℕ)^3 ≤ ((4 * Nat.sqrt n + 4 : ℕ) : ℝ)^3 := by
+        exact_mod_cast (le_refl _)
+      have h_real_cube : ((4 * Nat.sqrt n + 4 : ℕ) : ℝ) ≤ 4 * Real.sqrt n + 4 := by
+        have h_ge : (Nat.sqrt n : ℝ) ≤ Real.sqrt n := h_sqrt_ge_nat
+        exact_mod_cast (by omega : 4 * Nat.sqrt n + 4 ≥ 0)
+      have h_pow : ((4 * Nat.sqrt n + 4 : ℕ) : ℝ)^3 ≤ (4 * Real.sqrt n + 4)^3 := by
+        have h1 : ((4 * Nat.sqrt n + 4 : ℕ) : ℝ) ≤ 4 * Real.sqrt n + 4 := by
+          have h_ge : (Nat.sqrt n : ℝ) ≤ Real.sqrt n := h_sqrt_ge_nat
+          have h_cast : ((4 * Nat.sqrt n + 4 : ℕ) : ℝ) = 4 * (Nat.sqrt n : ℝ) + 4 := by
+            push_cast
+          rw [h_cast]
+          linarith
+        exact pow_le_pow_left₀ (by linarith : (0:ℝ) ≤ 4 * (Nat.sqrt n : ℝ) + 4) h1 3
+      have h_k_lt_real : (a.length - 1 : ℝ)^3 < (4 * Real.sqrt n + 4)^3 := by
+        have h1 : (a.length - 1 : ℝ)^3 ≤ ((4 * Nat.sqrt n + 4 : ℕ) : ℝ)^3 := by
+          exact_mod_cast h_k_cube_lt
+        exact lt_of_le_of_lt h1 h_pow
+      have h_k_lt : (a.length - 1 : ℝ) < 4 * Real.sqrt n + 4 := by
+        by_contra h_not
+        push_neg at h_not
+        have h_cube_ge : (4 * Real.sqrt n + 4)^3 ≤ (a.length - 1 : ℝ)^3 :=
+          pow_le_pow_left₀ (by linarith : (0:ℝ) ≤ 4 * Real.sqrt n + 4) h_not 3
+        linarith
+      exact_mod_cast (by omega : a.length ≤ 4 * Nat.sqrt n + 4)
+    · -- n ≥ 510: use Cauchy-Schwarz with fractional sqrt bounds
+      -- For n ∈ [510, 550]: 3*n*(n-1) ≤ 3*550*549 = 905850 < 912673 = 97^3
+      -- Need 97 ≤ 4*Real.sqrt(n)+4, i.e., sqrt(n) ≥ 93/4
+      -- (93/4)^2 = 8649/16 = 540.5625 ≤ 510 ≤ n (for n ≥ 510? No! 540.5625 > 510!)
+      -- Need different bounds for different ranges:
+      -- n ∈ [510, 528]: sqrt ≥ 91/4 (since (91/4)^2 = 8281/16 = 517.5625 ≤ 510)
+      --   4*91/4+4 = 95, 3*528*527 = 834768 < 95^3 = 857375 ✓
+      -- n ∈ [529, 540]: sqrt ≥ 23 (since 529 = 23^2 ≤ n)
+      --   4*23+4 = 96, 3*540*539 = 873180 < 96^3 = 884736 ✓
+      -- n ∈ [541, 550]: sqrt ≥ 93/4 (since (93/4)^2 = 540.5625 ≤ 541)
+      --   4*93/4+4 = 97, 3*550*549 = 905850 < 97^3 = 912673 ✓
+
+      by_cases hn528 : n ≤ 528
+      · -- n ∈ [510, 528]: sqrt ≥ 91/4, 4*sqrt+4 ≥ 95
+        have h_sqrt : (91 / 4 : ℝ) ≤ Real.sqrt n := by
+          have h_n_ge : (517.5625 : ℝ) ≤ n := by
+            have : (510 : ℝ) ≤ n := by exact_mod_cast (by omega : 510 ≤ n)
+            have : (517.5625 : ℝ) ≤ 510 := by norm_num
+            linarith
+          have h_sq : (91/4 : ℝ)^2 = 8281/16 := by norm_num
+          have h_chain : (91/4 : ℝ)^2 ≤ n := by rw [h_sq]; linarith
+          have h_y_pos : (0 : ℝ) ≤ 91/4 := by norm_num
+          have h_y_sqrt : Real.sqrt ((91/4 : ℝ)^2) = 91/4 := by
             rw [Real.sqrt_sq h_y_pos]
-          have h_chain2 : Real.sqrt ((93/4 : ℝ)^2) ≤ Real.sqrt n :=
+          have h_chain2 : Real.sqrt ((91/4 : ℝ)^2) ≤ Real.sqrt n :=
             Real.sqrt_le_sqrt h_chain
           rw [h_y_sqrt] at h_chain2
           exact h_chain2
-        have h_97 : (97 : ℝ) ≤ 4 * Real.sqrt n + 4 := by linarith
-        have h_97_cube : (97 : ℝ)^3 ≤ (4 * Real.sqrt n + 4)^3 :=
-          pow_le_pow_left₀ (by norm_num : (0:ℝ) ≤ 97) h_97 3
-        have h_3n_max : (3 : ℝ) * 550 * 549 ≤ 97^3 := by norm_num
-        have h_3n : (3 : ℝ) * n * (n - 1) ≤ 97^3 := by
-          have h_n_r : (n : ℝ) ≤ 550 := by exact_mod_cast (by omega : n ≤ 550)
-          have h_n1_r : ((n - 1 : ℕ) : ℝ) ≤ 549 := by exact_mod_cast (by omega : n - 1 ≤ 549)
-          nlinarith
-        -- (k-1)^3 ≤ 3n(n-1) ≤ 97^3 ≤ (4*sqrt(n)+4)^3
-        -- So k-1 ≤ 97, k ≤ 98 ≤ 4*sqrt(n)+4 (since sqrt(n) ≥ 93/4, 4*93/4+4=97, 98 ≤ 97? No!)
-        -- Wait: k-1 ≤ (3n(n-1))^(1/3) ≤ 97, so k ≤ 98
-        -- But 4*sqrt(n)+4 ≥ 97, and 98 > 97. So k ≤ 98 > 97 = 4*sqrt(n)+4-1
-        -- This is off by one!
-        -- Fix: (k-1)^3 ≤ 3n(n-1) ≤ 97^3, so k-1 ≤ 97, k ≤ 98
-        -- Need 98 ≤ 4*sqrt(n)+4, i.e., sqrt(n) ≥ 94/4 = 23.5
-        -- (23.5)^2 = 552.25 ≤ 544? No! 552.25 > 544
-        -- So sqrt(544) < 23.5, and 4*sqrt(544)+4 < 98
-        -- This approach fails!
-        -- Better: use 94/4 = 47/2, (47/2)^2 = 2209/4 = 552.25
-        -- 552.25 ≤ n for n ≥ 553, but we need n ≥ 544
-        -- So 47/2 doesn't work for n ∈ [544, 552]
-        -- Need a different approach for n ∈ [544, 550]
-        -- Use: (k-1)^3 ≤ 3n(n-1) ≤ (4*Nat.sqrt(n)+4)^3
-        -- For n ∈ [544, 550]: Nat.sqrt(n) = 23 (since 23^2=529 ≤ n < 576=24^2)
-        -- (4*23+4)^3 = 96^3 = 884736
-        -- 3*550*549 = 905850 > 884736 ✗!
-        -- Fails! So Nat.sqrt(23) bound is too weak for n ∈ [544, 550]
-        -- Need Real.sqrt bound: sqrt(n) ≥ 23 + delta for some delta > 0
-        -- sqrt(544) ≈ 23.32, 4*23.32+4 = 97.3
-        -- Need: (k-1)^3 ≤ 3n(n-1) ≤ 97^3 = 912673
-        -- 3*550*549 = 905850 ≤ 912673 ✓
-        -- So (k-1) ≤ 97, k ≤ 98
-        -- Need: 98 ≤ 4*sqrt(n)+4, i.e., sqrt(n) ≥ 94/4 = 23.5
-        -- But sqrt(544) ≈ 23.32 < 23.5, so 4*sqrt(544)+4 ≈ 97.3 < 98 ✗!
-        -- Fails for n=544!
-        -- For n=548: sqrt(548) ≈ 23.41, 4*23.41+4 = 97.6 < 98 ✗
-        -- For n=553: sqrt(553) ≈ 23.52, 4*23.52+4 = 98.1 ≥ 98 ✓
-        -- But we need n ≤ 550, so this doesn't help
-        -- For n ∈ [544, 550]: need k ≤ 97, not 98
-        -- (k-1)^3 ≤ 3n(n-1) ≤ 97^3, so k-1 ≤ 97, k ≤ 98
-        -- But 97^3 = 912673, and 3*550*549 = 905850 ≤ 912673
-        -- So (k-1)^3 ≤ 905850 < 97^3, so k-1 < 97, k-1 ≤ 96, k ≤ 97
-        -- And 4*sqrt(n)+4 ≥ 4*93/4+4 = 97 ✓!
-        -- Wait: (k-1)^3 ≤ 905850, and 96^3 = 884736 < 905850
-        -- So (k-1)^3 ≤ 905850 doesn't give k-1 ≤ 96!
-        -- 97^3 = 912673 > 905850, so k-1 < 97, k-1 ≤ 96, k ≤ 97
-        -- 4*sqrt(n)+4 ≥ 97 (from sqrt(n) ≥ 93/4)
-        -- So k ≤ 97 ≤ 4*sqrt(n)+4 ✓!
-        -- The key: 3*550*549 = 905850 < 912673 = 97^3
-        -- So (k-1)^3 ≤ 905850 < 97^3, k-1 < 97, k ≤ 97
-        -- And 97 ≤ 4*sqrt(n)+4 ✓
-        -- This works!
-        have h_k_le_97 : (a.length : ℝ) ≤ 97 := by
-          -- From h_sum_sq: Σ (i+1)^2 ≤ n*(n-1)
-          -- (k-1)^3 ≤ 3*Σ ≤ 3*n*(n-1) (since (k-1)^3 ≤ (k-1)*k*(2k-1)/2 = 3*Σ)
-          -- 3*n*(n-1) ≤ 3*550*549 = 905850 < 912673 = 97^3
-          -- So (k-1)^3 < 97^3, k-1 < 97, k ≤ 97
-          have h_3n_real : (3 : ℝ) * n * (n - 1) ≤ 3 * 550 * 549 := by
+        -- 4*sqrt(n)+4 ≥ 4*(91/4)+4 = 95
+        have h_95 : (95 : ℝ) ≤ 4 * Real.sqrt n + 4 := by linarith
+        have h_95_cube : (95 : ℝ)^3 ≤ (4 * Real.sqrt n + 4)^3 :=
+          pow_le_pow_left₀ (by norm_num : (0:ℝ) ≤ 95) h_95 3
+        -- 3*n*(n-1) ≤ 3*528*527 = 834768 < 857375 = 95^3
+        have h_3n : (3 : ℝ) * n * (n - 1) ≤ 3 * 528 * 527 := by
+          have h_n_r : (n : ℝ) ≤ 528 := by exact_mod_cast (by omega : n ≤ 528)
+          have h_n1_r : ((n - 1 : ℕ) : ℝ) ≤ 527 := by exact_mod_cast (by omega : n - 1 ≤ 527)
+          push_cast; nlinarith
+        have h_95_lt : (3 : ℝ) * 528 * 527 < 95^3 := by norm_num
+        -- (k-1)^3 ≤ 3n(n-1) < 95^3 ≤ (4*sqrt(n)+4)^3
+        have h_cube_le : (a.length - 1 : ℕ)^3 ≤ 3 * ((List.range (a.length - 1)).map (fun i => (i+1 : ℕ) * (i+1))).sum :=
+          h_cube_le_3sum (a.length - 1)
+        have h_3sum_le : 3 * ((List.range (a.length - 1)).map (fun i => (i+1 : ℕ) * (i+1))).sum ≤ 3 * n * (n - 1) := by omega [h_sum_sq]
+        have h_k_lt : (a.length - 1 : ℝ)^3 < (4 * Real.sqrt n + 4)^3 := by
+          have h1 : (a.length - 1 : ℝ)^3 ≤ 3 * n * (n - 1) := by
+            push_cast; exact_mod_cast (by omega [h_cube_le, h_3sum_le])
+          exact lt_of_le_of_lt h1 (lt_of_le_of_lt h_3n h_95_lt)
+        have h_k1 : (a.length - 1 : ℝ) < 4 * Real.sqrt n + 4 := by
+          by_contra h_not
+          push_neg at h_not
+          have h_cube_ge : (4 * Real.sqrt n + 4)^3 ≤ (a.length - 1 : ℝ)^3 :=
+            pow_le_pow_left₀ (by linarith : (0:ℝ) ≤ 4 * Real.sqrt n + 4) h_not 3
+          linarith
+        exact_mod_cast (by omega : a.length ≤ 4 * Nat.sqrt n + 4)
+      · -- n ∈ [529, 550]: use sqrt ≥ 23 or 93/4
+        by_cases hn540 : n ≤ 540
+        · -- n ∈ [529, 540]: sqrt ≥ 23, 4*sqrt+4 ≥ 96
+          have h_sqrt : (23 : ℝ) ≤ Real.sqrt n := by
+            have h_n_ge : (529 : ℝ) ≤ n := by exact_mod_cast (by omega : 529 ≤ n)
+            have h_sq : Real.sqrt ((23 : ℝ)^2) = 23 := by
+              rw [Real.sqrt_sq (by norm_num)]
+            have h_chain : Real.sqrt ((23 : ℝ)^2) ≤ Real.sqrt n :=
+              Real.sqrt_le_sqrt (by linarith)
+            rw [h_sq] at h_chain
+            exact h_chain
+          have h_96 : (96 : ℝ) ≤ 4 * Real.sqrt n + 4 := by linarith
+          have h_96_cube : (96 : ℝ)^3 ≤ (4 * Real.sqrt n + 4)^3 :=
+            pow_le_pow_left₀ (by norm_num : (0:ℝ) ≤ 96) h_96 3
+          have h_3n : (3 : ℝ) * n * (n - 1) ≤ 3 * 540 * 539 := by
+            have h_n_r : (n : ℝ) ≤ 540 := by exact_mod_cast (by omega : n ≤ 540)
+            have h_n1_r : ((n - 1 : ℕ) : ℝ) ≤ 539 := by exact_mod_cast (by omega : n - 1 ≤ 539)
+            push_cast; nlinarith
+          have h_96_lt : (3 : ℝ) * 540 * 539 < 96^3 := by norm_num
+          have h_cube_le : (a.length - 1 : ℕ)^3 ≤ 3 * ((List.range (a.length - 1)).map (fun i => (i+1 : ℕ) * (i+1))).sum :=
+            h_cube_le_3sum (a.length - 1)
+          have h_3sum_le : 3 * ((List.range (a.length - 1)).map (fun i => (i+1 : ℕ) * (i+1))).sum ≤ 3 * n * (n - 1) := by omega [h_sum_sq]
+          have h_k_lt : (a.length - 1 : ℝ)^3 < (4 * Real.sqrt n + 4)^3 := by
+            have h1 : (a.length - 1 : ℝ)^3 ≤ 3 * n * (n - 1) := by
+              push_cast; exact_mod_cast (by omega [h_cube_le, h_3sum_le])
+            exact lt_of_le_of_lt h1 (lt_of_le_of_lt h_3n h_96_lt)
+          have h_k1 : (a.length - 1 : ℝ) < 4 * Real.sqrt n + 4 := by
+            by_contra h_not
+            push_neg at h_not
+            have h_cube_ge : (4 * Real.sqrt n + 4)^3 ≤ (a.length - 1 : ℝ)^3 :=
+              pow_le_pow_left₀ (by linarith : (0:ℝ) ≤ 4 * Real.sqrt n + 4) h_not 3
+            linarith
+          exact_mod_cast (by omega : a.length ≤ 4 * Nat.sqrt n + 4)
+        · -- n ∈ [541, 550]: sqrt ≥ 93/4, 4*sqrt+4 ≥ 97
+          have h_sqrt : (93 / 4 : ℝ) ≤ Real.sqrt n := by
+            have h_n_ge : (541 : ℝ) ≤ n := by exact_mod_cast (by omega : 541 ≤ n)
+            have h_sq : (93/4 : ℝ)^2 = 8649/16 := by norm_num
+            have h_le : (8649/16 : ℝ) ≤ 541 := by norm_num
+            have h_chain : (93/4 : ℝ)^2 ≤ n := by rw [h_sq]; linarith
+            have h_y_pos : (0 : ℝ) ≤ 93/4 := by norm_num
+            have h_y_sqrt : Real.sqrt ((93/4 : ℝ)^2) = 93/4 := by
+              rw [Real.sqrt_sq h_y_pos]
+            have h_chain2 : Real.sqrt ((93/4 : ℝ)^2) ≤ Real.sqrt n :=
+              Real.sqrt_le_sqrt h_chain
+            rw [h_y_sqrt] at h_chain2
+            exact h_chain2
+          have h_97 : (97 : ℝ) ≤ 4 * Real.sqrt n + 4 := by linarith
+          have h_97_cube : (97 : ℝ)^3 ≤ (4 * Real.sqrt n + 4)^3 :=
+            pow_le_pow_left₀ (by norm_num : (0:ℝ) ≤ 97) h_97 3
+          have h_3n : (3 : ℝ) * n * (n - 1) ≤ 3 * 550 * 549 := by
             have h_n_r : (n : ℝ) ≤ 550 := by exact_mod_cast (by omega : n ≤ 550)
             have h_n1_r : ((n - 1 : ℕ) : ℝ) ≤ 549 := by exact_mod_cast (by omega : n - 1 ≤ 549)
-            push_cast
-            nlinarith
-          have h_97_3 : (3 : ℝ) * 550 * 549 < 97^3 := by norm_num
-          have h_cube_bound : (a.length - 1 : ℝ)^3 ≤ 3 * n * (n - 1) := by
-            -- (k-1)^3 ≤ 3 * Σ (i+1)^2 ≤ 3 * n * (n-1)
-            -- Need to prove: (k-1)^3 ≤ 3 * h_sum_sq
-            sorry
-          have : (a.length - 1 : ℝ)^3 < 97^3 := by
-            exact lt_of_le_of_lt h_cube_bound (lt_of_le_of_lt h_3n_real h_97_3)
-          -- k-1 < 97, so k ≤ 97 (since k is integer)
-          have h_k1_int : (a.length - 1 : ℕ) < 97 := by
-            -- (a.length - 1)^3 ≤ 3*n*(n-1) ≤ 905850 < 912673 = 97^3
-            -- Since a.length - 1 is a natural number and (a.length - 1)^3 < 97^3,
-            -- we have a.length - 1 < 97
-            -- But we can't prove this with omega since it involves cubes
-            sorry
-          exact_mod_cast (by omega : a.length ≤ 97)
-        linarith
+            push_cast; nlinarith
+          have h_97_lt : (3 : ℝ) * 550 * 549 < 97^3 := by norm_num
+          have h_cube_le : (a.length - 1 : ℕ)^3 ≤ 3 * ((List.range (a.length - 1)).map (fun i => (i+1 : ℕ) * (i+1))).sum :=
+            h_cube_le_3sum (a.length - 1)
+          have h_3sum_le : 3 * ((List.range (a.length - 1)).map (fun i => (i+1 : ℕ) * (i+1))).sum ≤ 3 * n * (n - 1) := by omega [h_sum_sq]
+          have h_k_lt : (a.length - 1 : ℝ)^3 < (4 * Real.sqrt n + 4)^3 := by
+            have h1 : (a.length - 1 : ℝ)^3 ≤ 3 * n * (n - 1) := by
+              push_cast; exact_mod_cast (by omega [h_cube_le, h_3sum_le])
+            exact lt_of_le_of_lt h1 (lt_of_le_of_lt h_3n h_97_lt)
+          have h_k1 : (a.length - 1 : ℝ) < 4 * Real.sqrt n + 4 := by
+            by_contra h_not
+            push_neg at h_not
+            have h_cube_ge : (4 * Real.sqrt n + 4)^3 ≤ (a.length - 1 : ℝ)^3 :=
+              pow_le_pow_left₀ (by linarith : (0:ℝ) ≤ 4 * Real.sqrt n + 4) h_not 3
+            linarith
+          exact_mod_cast (by omega : a.length ≤ 4 * Nat.sqrt n + 4)
     · -- n ≥ 551: need partitioning argument
       sorry
   exact h_cs
