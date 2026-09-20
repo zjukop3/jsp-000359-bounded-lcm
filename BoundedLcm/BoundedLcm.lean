@@ -336,118 +336,84 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
   -- Try using List.sum and List.take instead
 
   have h_cs : (a.length : ℝ) ≤ 4 * Real.sqrt n + 4 := by
-    -- Cauchy-Schwarz sum argument using Finset.sum
-    -- For each i in [0, k-2]: (i+1)^2 ≤ n * d_i where d_i = a_{i+1} - a_i
-    -- Sum over i: Σ (i+1)^2 ≤ n * Σ d_i
-    -- Σ d_i = a_{k-1} - a_0 ≤ n - 1 (telescoping)
-    -- So Σ (i+1)^2 ≤ n(n-1) < n^2
-
-    -- Key: use List.sum for the telescoping sum
-    -- d_i = a_{i+1} - a_i for i = 0..k-2
-    -- Σ d_i = a_{k-1} - a_0
-
-    -- Use a simpler approach: prove k ≤ n and then use interval_cases
-    -- for n ≤ 500 (where k ≤ n ≤ 500 and 4√500+4 ≈ 93)
-    -- But k ≤ n doesn't give k ≤ 93, so this doesn't work
-
-    -- Alternative: use the fact that for n ≥ 24, 4√n + 4 ≥ 23.6
-    -- and if a.length ≥ 24, we need the lcm constraint
-
-    -- Let's try: for n ≤ 500, use interval_cases to verify
-    -- that 4√n + 4 ≥ (3n^2)^(1/3) + 1 ≥ k
-    -- This requires k ≤ (3n^2)^(1/3) + 1 which needs the sum argument
-
-    -- For now: use a weaker but provable bound
-    -- Since a.length ≤ n (pigeonhole) and n ≥ 24,
-    -- and 4√n + 4 ≥ 4*4.89 + 4 = 23.56 (for n ≥ 24),
-    -- we need a.length ≤ 23.56, i.e., a.length ≤ 23
-    -- But a.length ≥ 24 (from hl24 negation), so this fails
-
-    -- The only way: use the lcm constraint
-    -- Key insight: d_i ≥ (i+1)^2/n for each i
-    -- For i = 0: d_0 ≥ 1/n, so d_0 ≥ 1 (integer, n ≥ 1)
-    -- For i = 1: d_1 ≥ 4/n, for n ≥ 4: d_1 ≥ 1 (integer)
-    -- For i = 2: d_2 ≥ 9/n, for n ≥ 9: d_2 ≥ 1 (integer)
-    -- For i = 3: d_3 ≥ 16/n, for n ≥ 16: d_3 ≥ 1 (integer)
-    -- For i = 4: d_4 ≥ 25/n, for n ≥ 25: d_4 ≥ 1 (integer)
-    -- For i = √n - 1: d_i ≥ n/n = 1
-    -- For i = √n: d_i ≥ (√n+1)^2/n ≈ 1 + 2/√n > 1, so d_i ≥ 2 (integer)
-    -- For i = 2√n: d_i ≥ (2√n+1)^2/n ≈ 4, so d_i ≥ 4 (integer)
-
-    -- So: first √n elements have d_i ≥ 1 (trivial)
-    -- Next √n elements have d_i ≥ 2
-    -- Total gap: √n * 1 + √n * 2 = 3√n ≤ n (true for n ≥ 9)
-    -- Remaining elements (k - 2√n) have d_i ≥ 4
-    -- So: (k - 2√n) * 4 ≤ n - 3√n
-    -- k ≤ 2√n + (n - 3√n)/4 = 2√n + n/4 - 3√n/4 = 5√n/4 + n/4
-    -- For n = 24: 5*4.89/4 + 24/4 = 6.1 + 6 = 12.1 ≤ 23.6 ✓
-    -- For n = 100: 5*10/4 + 25 = 12.5 + 25 = 37.5 ≤ 44 ✓
-    -- For n = 500: 5*22.36/4 + 125 = 27.95 + 125 = 153 ≤ 93 ✗
-    -- Fails for n ≥ ~200!
-
-    -- Better: for each layer m = 1, 2, ..., √n:
-    -- elements in layer m have d_i ≥ m
-    -- layer m has at most n/m elements (since total gap in layer = n/m * m ≤ n)
-    -- Wait, that's not right. The layers are by INDEX, not by value.
-
-    -- The correct partitioning argument (from the proof sketch):
-    -- r = ⌈√n⌉
-    -- For layer m (m = 1, ..., r): elements with a_i in (r*(m-1), r*m]
-    -- In layer m ≥ 2: a_i ≥ r*(m-1) ≥ √n*(m-1)
-    -- So d_i ≥ (m-1)^2 (from h_sq_bound and a_i ≥ √n*(m-1))
-    -- gap_count: layer m has at most r/(m-1)^2 + 1 elements
-    -- Total: k ≤ r + Σ_{m=2}^{r} (r/(m-1)^2 + 1) ≤ r + 2r + r = 4r
-    -- 4r ≤ 4(√n + 1) = 4√n + 4
-
-    -- This is the partitioning argument using gap_count and sum_inv_sq_lt_two!
-    -- But implementing it requires partitioning the list by layers,
-    -- which is very complex in Lean.
-
-    -- Given the complexity, let's use a different approach:
-    -- For n ≥ 24: prove k ≤ 4√n + 4 via:
-    -- 1. k ≤ n (pigeonhole, already proven)
-    -- 2. If k > 4√n + 4, derive contradiction
-    -- 3. Contradiction: Σ d_i ≤ n but Σ d_i ≥ Σ (i+1)^2/n
-    --    and Σ (i+1)^2 > n^2 when k > 4√n + 4
-
-    -- For the contradiction: need Σ (i+1)^2 for i = 0..k-2
-    -- This is (k-1)k(2k-1)/6
-    -- If k > 4√n + 4, then k ≥ 4√n + 5 (integer)
-    -- (k-1)k(2k-1)/6 ≥ (k-1)^3/3 ≥ (4√n+4)^3/3 ≈ 64n√n/3
-    -- And n * n = n^2
-    -- Need: 64n√n/3 > n^2, i.e., 64√n/3 > n, i.e., n < (64/3)^2 ≈ 455
-    -- So for n ≤ 455: contradiction works
-    -- For n ≥ 456: need the partitioning argument
-
-    -- For n ≤ 455: use interval_cases
-    -- For n ≥ 456: use partitioning (gap_count + sum_inv_sq_lt_two)
-
-    -- Actually, the simplest approach that might work:
-    -- Use interval_cases for ALL n in [24, 455]
-    -- and for n ≥ 456 use a simple bound like k ≤ n and
-    -- n ≤ 4√n + 4... which fails for n ≥ 24
-
-    -- Let's try: for n ≤ 1000, use that 4√n + 4 ≥ 4*√24 + 4 ≈ 23.6
-    -- and if k ≥ 24, then from h_sq_bound:
-    -- Σ_{i=0}^{22} (i+1)^2 = 23*24*47/6 = 4312
-    -- and n * Σ d_i ≥ 4312, so Σ d_i ≥ 4312/n
-    -- Also Σ d_i ≤ n, so n ≥ 4312/n, n^2 ≥ 4312, n ≥ 66
-    -- So if k ≥ 24, then n ≥ 66
-    -- And 4*√66 + 4 ≈ 36.5, so k ≤ 36.5 if k ≤ n ≤ ... still need more
-
-    -- This is getting circular. The fundamental issue is that
-    -- without the full sum argument (Σ (i+1)^2 ≤ n^2), we can't
-    -- derive k^3 ≤ 3n^2, and without that we can't bound k.
-
-    -- Let's try one more approach: use native_decide
-    -- For small n (24 ≤ n ≤ 1000), verify k ≤ 4√n + 4 directly
-    -- This requires the theorem to be decidable, which it isn't (Real.sqrt)
-    -- But we can verify: for each n in [24, 1000],
-    -- the maximum k satisfying the lcm constraint is ≤ floor(4√n + 4)
-
-    -- This is too complex for native_decide since it involves Real.sqrt
-
-    -- Final approach: just use sorry for now, but with a clear plan
+    -- Strategy: use interval_cases for n ∈ [24, 1000]
+    -- For each n in this range, prove k ≤ 4√n + 4
+    -- Since k ≤ n (pigeonhole), it suffices to show n ≤ 4√n + 4
+    -- But n ≤ 4√n + 4 only for n ≤ 23, so pigeonhole alone fails
+    --
+    -- Instead: use the lcm constraint directly
+    -- For each i < k-1: (i+1)^2 ≤ n * d_i (h_sq_bound)
+    -- So d_i ≥ ⌈(i+1)^2 / n⌉ (integer ceiling)
+    -- Σ d_i = a_{k-1} - a_0 ≤ n - 1
+    -- So Σ ⌈(i+1)^2 / n⌉ ≤ n - 1
+    --
+    -- For n = 24: ⌈1/24⌉=1, ⌈4/24⌉=1, ⌈9/24⌉=1, ..., ⌈25/24⌉=2, ...
+    -- This gives a much tighter bound on k
+    --
+    -- Use interval_cases for n ∈ [24, 1000]:
+    -- For each n, compute the maximum k such that
+    -- Σ_{i=0}^{k-2} ⌈(i+1)^2/n⌉ ≤ n-1
+    -- and verify k ≤ floor(4√n + 4)
+    --
+    -- This is a finite computation for each n
+    -- But interval_cases can't handle Real.sqrt
+    --
+    -- Alternative: use native_decide on a Nat-valued version
+    -- Define: max_k(n) = maximum k such that Σ ⌈(i+1)^2/n⌉ ≤ n-1
+    -- Prove: max_k(n) ≤ 4*Nat.sqrt(n) + 4 for n ∈ [24, 1000]
+    -- Then: a.length ≤ max_k(n) ≤ 4*Nat.sqrt(n) + 4 ≤ 4*√n + 4
+    --
+    -- But proving a.length ≤ max_k(n) still needs the sum argument
+    --
+    -- Simplest approach that actually works in Lean:
+    -- Use the fact that for n ≥ 24, n ≥ 4^2, so √n ≥ 4
+    -- And 4*4 + 4 = 20
+    -- And for k ≥ 21 (i.e., k > 20), we have:
+    -- Σ_{i=0}^{19} (i+1)^2 = 20*21*41/6 = 2870
+    -- And n * (n-1) ≥ n * (n-1), need 2870 ≤ n(n-1)
+    -- For n = 24: 24*23 = 552, 2870 > 552, so k ≥ 21 is impossible for n = 24
+    -- For n = 54: 54*53 = 2862, 2870 > 2862, so k ≥ 21 is impossible for n ≤ 54
+    -- For n = 55: 55*54 = 2970, 2870 ≤ 2970, so k = 21 is possible
+    -- And 4*√55 + 4 ≈ 4*7.42 + 4 = 33.7, so k ≤ 33.7
+    --
+    -- This approach requires: if k ≥ 21, then n ≥ 55
+    -- And if n ≥ 55, then 4√n + 4 ≥ 4*√55 + 4 ≈ 33.7
+    -- And if k ≥ 34, then Σ_{i=0}^{32} (i+1)^2 = 33*34*67/6 = 12529
+    -- Need 12529 ≤ n(n-1), so n ≥ 113
+    -- And 4*√113 + 4 ≈ 4*10.63 + 4 = 46.5
+    --
+    -- This is a layered argument! Each layer pushes n higher
+    -- and 4√n + 4 grows faster than k
+    --
+    -- For any k ≥ 24:
+    -- Σ_{i=0}^{k-2} (i+1)^2 = (k-1)*k*(2k-1)/6 ≥ (k-1)^3/3
+    -- Need (k-1)^3/3 ≤ n(n-1) < n^2
+    -- So (k-1)^3 < 3n^2, k-1 < (3n^2)^(1/3)
+    -- k < (3n^2)^(1/3) + 1
+    --
+    -- For n ≥ 24: (3*576)^(1/3) = 1728^(1/3) = 12
+    -- 4*√24 + 4 ≈ 23.6, so k < 13 ≤ 23.6 ✓
+    --
+    -- For n ≥ 500: (3*250000)^(1/3) ≈ 90.8
+    -- 4*√500 + 4 ≈ 93.4, so k < 91.8 ≤ 93.4 ✓
+    --
+    -- For n ≥ 1000: (3*10^6)^(1/3) ≈ 144.2
+    -- 4*√1000 + 4 ≈ 130.5, 144.2 > 130.5 ✗
+    -- Fails for n ≥ ~600
+    --
+    -- So Cauchy-Schwarz works for n ≤ ~500
+    -- For n ≥ 501: need partitioning (gap_count + sum_inv_sq_lt_two)
+    --
+    -- Implementation plan:
+    -- 1. For n ≤ 500: prove k < (3n^2)^(1/3) + 1 ≤ 4√n + 4
+    --    Step 1a: Σ (i+1)^2 ≤ n(n-1) < n^2 (sum argument)
+    --    Step 1b: (k-1)^3/3 ≤ n^2 (from sum formula)
+    --    Step 1c: (3n^2)^(1/3) + 1 ≤ 4√n + 4 (numerical inequality)
+    -- 2. For n ≥ 501: use partitioning argument (complex)
+    --
+    -- Since step 1a requires Finset.sum over List indices,
+    -- and step 2 requires partitioning, both are complex.
+    -- For now: sorry
     sorry
   exact h_cs
 
