@@ -358,11 +358,38 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
             (a.get ⟨j + 1, hj⟩ - a.get ⟨j, hj'⟩) =
             a.get ⟨j + 1, hj⟩ - a.get ⟨0, by omega⟩ := by omega
         nlinarith
-    -- From h_sum_ind: Σ (i+1)^2 ≤ n*(a_{k-1} - a_0) ≤ n*(n-1) < n^2
-    -- So (k-1)^3/3 ≤ (k-1)k(2k-1)/6 = Σ (i+1)^2 < n^2
-    -- k ≤ (3n^2)^(1/3) + 1 ≤ 4√n + 4 for n ≥ 24
-    -- The full chain requires more work to formalize
-    sorry
+    -- From h_sum_ind with j = a.length - 1:
+    -- Σ (i+1)^2 ≤ n*(a_{k-1} - a_0) ≤ n*(n-1) < n^2
+    -- Then (k-1)^3 ≤ 3*n^2 (using (k-1)^3 ≤ (k-1)*k*(2*k-1) = 6*Σ (i+1)^2)
+    -- k ≤ (3n^2)^(1/3) + 1
+    -- For n ≥ 24: (3*576)^(1/3) = 12, so k ≤ 13
+    -- 4*√24 + 4 ≈ 23.6, so k ≤ 13 ≤ 23.6 ✓
+    -- For n ≥ 500: (3*250000)^(1/3) ≈ 90.8, k ≤ 91.8
+    -- 4*√500 + 4 ≈ 93.4, so k ≤ 91 ≤ 93.4 ✓
+    -- For n ≥ 1000: (3*10^6)^(1/3) ≈ 144.2
+    -- 4*√1000 + 4 ≈ 130.5, 144.2 > 130.5 ✗
+    -- Fails for n ≥ ~600
+    -- For n ≥ 600: need partitioning argument (gap_count + sum_inv_sq_lt_two)
+    -- This gives k ≤ 4√n + 4 for all n
+    -- For now: use interval_cases for n ≤ 1000 and sorry for n ≥ 1001
+    by_cases hn1000 : n ≤ 1000
+    · -- For 24 ≤ n ≤ 1000: use the sum bound to get k ≤ 4√n + 4
+      -- From h_sum_ind: Σ (i+1)^2 ≤ n*(a_{k-1} - a_0) ≤ n*(n-1)
+      -- Since a.length ≥ 24, a.length - 1 ≥ 23
+      -- Apply h_sum_ind at j = a.length - 1:
+      -- Σ_{i=0}^{a.length-2} (i+1)^2 ≤ n * (a_{last} - a_0) ≤ n * (n - 1)
+      -- So a.length^3 ≤ 3 * n^2 + 1 (approximately)
+      -- And (3n^2 + 1)^(1/3) ≤ 4√n + 4 for n ≤ 1000
+      -- For n = 1000: (3*10^6)^(1/3) ≈ 144.2, 4*√1000+4 ≈ 130.5
+      -- This FAILS for n ≥ ~600!
+      -- So Cauchy-Schwarz alone doesn't work for n ≥ 600
+      -- Need partitioning for n ≥ 600
+      -- For n ≤ 500: it works
+      -- For n ∈ [501, 1000]: need partitioning
+      -- Since partitioning is very complex, use sorry for now
+      sorry
+    · -- n ≥ 1001: need partitioning argument
+      sorry
   exact h_cs
 
 end
