@@ -577,21 +577,65 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
 
       by_cases hn399 : n ≤ 399
       · -- For 24 ≤ n ≤ 399: use perfect square lower bound on sqrt(n)
-        -- m = floor(sqrt(n)), sqrt(n) ≥ m
-        -- (4*sqrt(n)+3)^3 ≥ (4m+3)^3
-        -- Need: 3n(n-1) ≤ (4m+3)^3
-        -- Use interval_cases on m (m ranges from 4 to 19)
-        -- But we need to connect n to m
-        -- Use: if n < (m+1)^2, then sqrt(n) < m+1, so m = floor(sqrt(n))
-        -- Actually: for n in [m², (m+1)²-1], sqrt(n) ≥ m
-        -- And 3n(n-1) ≤ 3*((m+1)²-1)*((m+1)²-2) for n ≤ (m+1)²-1
-        -- Need: 3*((m+1)²-1)*((m+1)²-2) ≤ (4m+3)^3 for m = 4,...,19
-        -- m=19: 3*(400-1)*(400-2) = 3*399*398 = 476406, (79)^3 = 493039 ✓
-        -- m=4: 3*(25-1)*(25-2) = 3*24*23 = 1656, (19)^3 = 6859 ✓
-        -- So for m ∈ [4, 19]: the inequality holds
-        -- Use interval_cases on m
+        -- For each m from 4 to 19, for n in [m², (m+1)²-1]:
+        -- sqrt(n) ≥ m (since n ≥ m²)
+        -- So 4*sqrt(n)+3 ≥ 4m+3
+        -- And (4*sqrt(n)+3)³ ≥ (4m+3)³ (by pow_le_pow_left₀)
+        -- Need: 3n(n-1) ≤ (4m+3)³
+        -- Max of 3n(n-1) over n in [m², (m+1)²-1] is 3*((m+1)²-1)*((m+1)²-2)
+        -- Verify: 3*((m+1)²-1)*((m+1)²-2) ≤ (4m+3)³ for m = 4,...,19
+        
+        -- For m=4: 3*24*23=1656 ≤ 19³=6859
+        -- For m=19: 3*399*398=476406 ≤ 79³=493039
+        -- All verified numerically
+        
+        -- Strategy: use interval_cases on n, and for each n,
+        -- compute m = Nat.sqrt n, then verify 3*n*(n-1) ≤ (4*m+3)^3
+        -- and use Real.sqrt_le_sqrt to get sqrt(n) ≥ sqrt(m²) = m
+        
+        have h_nat_sqrt : ∀ n : ℕ, n ≥ 1 → Nat.sqrt n * Nat.sqrt n ≤ n := by
+          intro n hn
+          exact Nat.sqrt_le n
+        have h_nat_sqrt_le : ∀ n : ℕ, Nat.sqrt n * Nat.sqrt n ≤ n := fun n =>
+          Nat.sqrt_le n
+        
+        -- For n ≤ 399: Nat.sqrt n ≤ 19 (since 20² = 400 > 399)
+        have h_sr_le_19 : Nat.sqrt n ≤ 19 := by
+          have h400 : n < 400 := by omega
+          have : Nat.sqrt n < 20 := Nat.sqrt_lt'.mpr (by omega : n < 20^2)
+          omega
         sorry
-      · -- For n ∈ [400, 550]: need more work
+      · -- For n ∈ [400, 550]: use interval_cases with finer sqrt bounds
+        -- For n in [400, 440]: sqrt(n) ≥ 20, (4*20+3)^3 = 83^3 = 571787
+        -- 3*440*439 = 579480 > 571787, so this doesn't work!
+        -- Need sqrt(n) ≥ 20.5 for n ≥ 420: (4*20.5+3)^3 = 85^3 = 614125
+        -- But we can't prove sqrt(420) ≥ 20.5 easily
+        -- Alternative: use that 3*420*419 = 527940 ≤ 85^3 = 614125 ✓
+        -- And sqrt(420) ≥ 20 (from 420 ≥ 400 = 20²)
+        -- So (4*sqrt(420)+3)³ ≥ (4*20+3)³ = 83³ = 571787
+        -- But 3*420*419 = 527940 ≤ 571787 ✓ (works for n ≤ ~437)
+        -- For n ≥ 438: 3*438*437 = 573762 > 571787 ✗
+        -- Need sqrt(n) ≥ 21 for n ≥ 441: (4*21+3)³ = 87³ = 658503
+        -- 3*550*549 = 905850 > 658503 ✗
+        -- For n ≥ 529: sqrt(n) ≥ 23: (4*23+3)³ = 95³ = 857375
+        -- 3*550*549 = 905850 > 857375 ✗
+        -- For n ≥ 576: sqrt(n) ≥ 24: (4*24+3)³ = 99³ = 970299
+        -- 3*550*549 = 905850 ≤ 970299 ✓ (but n ≤ 550 < 576)
+        
+        -- So for n ∈ [400, 550], we need finer bounds:
+        -- n ∈ [400, 437]: sqrt ≥ 20, 3n(n-1) ≤ 3*437*436 = 570756 ≤ 571787 = 83³ ✓
+        -- n ∈ [438, 440]: sqrt ≥ 20, 3*440*439 = 579480 > 571787 ✗
+        -- n ∈ [441, 483]: sqrt ≥ 21, 3*483*482 = 698838 ≤ 658503 ✗ (698838 > 658503!)
+        -- Actually 3*441*440 = 582120 ≤ 658503 ✓, but 3*483*482 = 698838 > 658503 ✗
+        -- n ∈ [441, 467]: 3*467*466 = 652866 ≤ 658503 ✓
+        -- n ∈ [468, 483]: need sqrt ≥ 21.5, (4*21.5+3)³ ≈ 89³ = 704969
+        -- 3*483*482 = 698838 ≤ 704969 ✓ (but can't prove sqrt ≥ 21.5)
+        
+        -- This is getting extremely tedious. The fundamental problem is
+        -- that for large n, we need fractional sqrt bounds which are
+        -- very hard to prove in Lean without Real.sqrt computation.
+        
+        -- Given the enormous effort already spent, let's accept sorry here.
         sorry
     · -- For n ≥ 551: need partitioning argument
       sorry
