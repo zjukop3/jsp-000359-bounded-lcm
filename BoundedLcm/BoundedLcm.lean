@@ -417,227 +417,114 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
     -- For n = 600: 3*360000 = 1080000, (4*24.49+3)³ = 100.96³ = 1029000 ✗
     -- Fails at n ≈ 550!
     -- So (3n²)^(1/3) + 1 ≤ 4√n + 4 only for n ≤ ~550
+    -- Key: Real.sqrt n ≥ Nat.sqrt n
+    have h_sqrt_ge_nat : (Nat.sqrt n : ℝ) ≤ Real.sqrt n := by
+      have h_sq : (Nat.sqrt n : ℕ) * Nat.sqrt n ≤ n := Nat.sqrt_le n
+      have h_pos : (0 : ℝ) ≤ Nat.sqrt n := by exact_mod_cast (Nat.zero_le _)
+      have h1 : Real.sqrt ((Nat.sqrt n : ℕ) * Nat.sqrt n) ≤ Real.sqrt n :=
+        Real.sqrt_le_sqrt (by exact_mod_cast h_sq)
+      have h2 : Real.sqrt ((Nat.sqrt n : ℕ) * Nat.sqrt n) = Nat.sqrt n := by
+        have : (Nat.sqrt n : ℝ) * Nat.sqrt n = (Nat.sqrt n : ℝ)^2 := by rw [sq]
+        rw [this, Real.sqrt_sq h_pos]
+      linarith
 
-    -- For n > 550: need a different approach
-    -- Use the partitioning argument (gap_count + sum_inv_sq_lt_two)
-    -- But this is very complex to implement
-
-    -- Alternative: use the weaker bound k ≤ √(6n²) + 1 = √6 * n + 1
-    -- This is k ≤ 2.45n + 1, which is weaker but always ≤ 4√n + 4 for n ≥ 1?
-    -- No! 2.45n + 1 ≤ 4√n + 4 only for n ≤ ~2 (too weak)
-
-    -- The fundamental issue: Cauchy-Schwarz gives k = O(n^{2/3})
-    -- but we need k = O(√n). These are different!
-    -- For large n, n^{2/3} > √n, so Cauchy-Schwarz is not enough.
-    -- The partitioning argument gives k = O(√n) directly.
-
-    -- Given the complexity, let's use a completely different approach:
-    -- Just use interval_cases for n ≤ 600 (Cauchy-Schwarz works)
-    -- and for n ≥ 601, use the trivial bound k ≤ n and show
-    -- that 4√n + 4 ≥ n for n ≥ ... no, n > 4√n + 4 for n ≥ 24
-
-    -- Actually, for n ≥ 601:
-    -- 4√n + 4 ≥ 4*√601 + 4 ≈ 102
-    -- And k ≤ (3*601²)^(1/3) + 1 ≈ 91.7 + 1 = 92.7
-    -- So k ≤ 92 ≤ 102 = 4*√601 + 4 ✓!
-    -- Wait, this actually works! Let me check more carefully:
-    -- (3n²)^(1/3) = 3^(1/3) * n^(2/3)
-    -- 4√n = 4 * n^(1/2)
-    -- Need: 3^(1/3) * n^(2/3) + 1 ≤ 4 * n^(1/2) + 4
-    -- i.e., 3^(1/3) * n^(2/3) ≤ 4 * n^(1/2) + 3
-    -- i.e., 3^(1/3) * n^(1/6) ≤ 4 + 3/n^(1/2)
-    -- As n → ∞: LHS → ∞, RHS → 4. So this FAILS for large n.
-    -- At n = 600: LHS = 1.442 * 2.898 = 4.18, RHS = 4 + 0.122 = 4.122. FAILS.
-    -- At n = 500: LHS = 1.442 * 2.818 = 4.066, RHS = 4 + 0.134 = 4.134. OK.
-    -- So the bound works for n ≤ ~550 and fails for n ≥ ~551.
-
-    -- For n ≥ 551: need partitioning argument.
-    -- Since partitioning is extremely complex to formalize,
-    -- and we've already spent enormous effort,
-    -- let's just use sorry for the remaining cases.
+    -- For n ≤ 550: use interval_cases to verify 3*n*(n-1) ≤ (4*Nat.sqrt(n)+4)^3
+    -- This works for n ≤ 543 (Nat.sqrt gives enough precision)
+    -- For n ∈ [544, 550]: use Real.sqrt(n) ≥ 93/4
 
     by_cases hn550 : n ≤ 550
-    · -- For 24 ≤ n ≤ 550: use Cauchy-Schwarz + numerical inequality
-      -- Strategy: for each n, find a lower bound on sqrt(n) (using perfect squares)
-      -- and prove 3n(n-1) ≤ (4*sqrt(n)+3)^3
-      -- Key technique: sqrt(16) = 4, sqrt(25) = 5, sqrt(36) = 6, etc.
-      -- For n in [k², (k+1)²), sqrt(n) ≥ k
-      -- So 4*sqrt(n)+3 ≥ 4k+3, and (4k+3)^3 ≥ 3n(n-1)
-      -- Need to find k = floor(sqrt(n)) and verify 3n(n-1) ≤ (4k+3)^3
-      -- For n=24: k=4 (since 16≤24<25), (4*4+3)^3 = 19^3 = 6859, 3*24*23=1656 ✓
-      -- For n=100: k=10, (43)^3=79507, 3*100*99=29700 ✓
-      -- For n=550: k=23 (since 529≤550<576), (4*23+3)^3=95^3=857375, 3*550*549=905850
-      -- 905850 > 857375 ✗! So this approach fails for n=550!
-      -- Need a better approach for larger n
-
-      -- Actually, the issue is that (4k+3)^3 grows as 64k^3 while 3n(n-1) grows as 3n²
-      -- For n ≈ k², this is 64k³ vs 3k⁴, which fails for k ≥ 64/3 ≈ 21
-      -- So for k ≥ 22 (n ≥ 484): (4k+3)^3 < 3k^4 ≈ 3n²
-      -- This means the lower bound sqrt(n) ≥ k is too weak for large n
-
-      -- Better: use sqrt(n) ≥ k + 1/4 (approximately)
-      -- Or: use a finer partition, e.g. sqrt(24) ≥ sqrt(16) = 4
-      -- and then verify the numerical inequality directly
-
-      -- The simplest approach: use interval_cases with a manageable range
-      -- For n ≤ 100: interval_cases with sqrt bounds from perfect squares
-      -- For n ∈ [101, 550]: need more work
-
-      -- Actually, let me try a completely different approach:
-      -- Use the fact that (3n(n-1))^(1/3) ≤ 4*sqrt(n) + 3
-      -- i.e., 3n(n-1) ≤ (4*sqrt(n)+3)^3
-      -- For n ≤ 455: 3n² ≤ 64*n*sqrt(n) (since 3*sqrt(n) ≤ 64, sqrt(n) ≤ 64/3 ≈ 21.3, n ≤ 455)
-      -- And 64*n*sqrt(n) = (4*sqrt(n))^3 ≤ (4*sqrt(n)+3)^3
-      -- So 3n(n-1) ≤ 3n² ≤ (4*sqrt(n))^3 ≤ (4*sqrt(n)+3)^3 for n ≤ 455
-
-      -- For n ≤ 455: prove 3*sqrt(n) ≤ 64
-      -- sqrt(n) ≤ sqrt(455) ≤ sqrt(484) = 22
-      -- 3*22 = 66 > 64 ✗! So sqrt(455) ≤ 22 gives 3*22=66 > 64
-      -- Need n ≤ (64/3)^2 = 455.1... but sqrt(455) > 64/3
-      -- So use sqrt(455) ≤ sqrt(484) = 22, and 3*22 = 66 > 64
-      -- This doesn't work with perfect square bounds!
-
-      -- Alternative: use n ≤ 441 (since sqrt(441) = 21, 3*21 = 63 ≤ 64)
-      -- For n ≤ 441: sqrt(n) ≤ 21, 3*sqrt(n) ≤ 63 ≤ 64
-      -- 3n² ≤ 64*n*sqrt(n) (dividing by n: 3n ≤ 64*sqrt(n), i.e., 3*sqrt(n) ≤ 64)
-      -- For n ≤ 441: 3*21 = 63 ≤ 64 ✓
-      -- So 3n(n-1) ≤ 3n² ≤ 64*n*sqrt(n) = (4*sqrt(n))^3 ≤ (4*sqrt(n)+3)^3
-
-      -- For n ∈ [442, 550]: need a different argument
-      -- sqrt(442) ≥ 21, (4*21+3)^3 = 87^3 = 658503
-      -- 3*442*441 = 585186 ≤ 658503 ✓
-      -- sqrt(484) = 22, (4*22+3)^3 = 91^3 = 753571
-      -- 3*484*483 = 701556 ≤ 753571 ✓
-      -- sqrt(529) = 23, (4*23+3)^3 = 95^3 = 857375
-      -- 3*529*528 = 837936 ≤ 857375 ✓
-      -- sqrt(550) ≥ 23, (4*23+3)^3 = 95^3 = 857375
-      -- 3*550*549 = 905850 > 857375 ✗!
-      -- Fails for n ≥ ~539!
-
-      -- So the approach using perfect square lower bounds fails for n ≥ 539
-      -- For n ∈ [539, 550]: need sqrt(n) ≥ 23.2 (approximately)
-      -- But we can only prove sqrt(n) ≥ 23 (from sqrt(529) = 23)
-
-      -- For these few cases (n ∈ [539, 550], only 12 values):
-      -- Use interval_cases with a more precise sqrt bound
-      -- sqrt(539) ≥ sqrt(529) = 23, so 4*sqrt(539)+3 ≥ 95
-      -- 3*539*538 = 870186 > 857375 = 95^3 ✗
-      -- sqrt(539) ≥ 23.2 (approximately), but we can't prove this easily
-
-      -- The fundamental issue: for n near 550, the Cauchy-Schwarz bound is
-      -- very tight and requires high-precision sqrt bounds.
-
-      -- Given the extreme difficulty, let's use a simpler bound:
-      -- For n ≤ 441: use sqrt(n) ≤ 21 (perfect square bound)
-      -- This gives 3n² ≤ 63n*sqrt(n) < 64n*sqrt(n) = (4*sqrt(n))^3
-      -- So k ≤ (3n²)^(1/3) < 4*sqrt(n) ≤ 4*sqrt(n) + 4 ✓
-
-      -- For n ∈ [442, 550]: use interval_cases with explicit computation
-      -- But interval_cases over [442, 550] = 109 cases might be slow
-      -- Use a coarser bound: for n ≤ 550, sqrt(n) ≤ sqrt(576) = 24
-      -- (4*24+4)^3 = 100^3 = 1000000
-      -- 3*550*549 = 905850 ≤ 1000000 ✓
-      -- So if we can prove k ≤ (905850)^(1/3) + 1 ≤ 97 ≤ 100 = 4*24+4
-      -- But we need 4*sqrt(n)+4, not 4*24+4
-      -- For n ≤ 550: 4*sqrt(n)+4 ≤ 4*sqrt(576)+4 = 4*24+4 = 100
-      -- And (3*550*549)^(1/3) + 1 ≤ 97 ≤ 100 ✓
-      -- But this proves k ≤ 100, not k ≤ 4*sqrt(n)+4
-      -- For n=24: 4*sqrt(24)+4 ≈ 23.6, and 100 > 23.6, so k ≤ 100 doesn't help
-
-      -- The right approach: for each n, use the exact value of 4*sqrt(n)+4
-      -- and prove k ≤ that value
-      -- Since we can't compute 4*sqrt(n)+4 exactly for non-perfect-square n,
-      -- use a lower bound: 4*floor(sqrt(n))+4 (since sqrt(n) ≥ floor(sqrt(n)))
-      -- Wait, we need an UPPER bound on k, so we need k ≤ 4*sqrt(n)+4
-      -- If sqrt(n) ≥ m (some integer), then 4*sqrt(n)+4 ≥ 4m+4
-      -- So it suffices to prove k ≤ 4m+4 where m = floor(sqrt(n))
-      -- And k ≤ (3n(n-1))^(1/3) + 1
-      -- So need: (3n(n-1))^(1/3) + 1 ≤ 4m+4
-      -- i.e., 3n(n-1) ≤ (4m+3)^3
-
-      -- For n ∈ [m², (m+1)²): m = floor(sqrt(n)), sqrt(n) ≥ m
-      -- Need: 3n(n-1) ≤ (4m+3)^3 for all n ∈ [m², (m+1)²-1]
-
-      -- For m=4 (n ∈ [16,24]): 3*24*23 = 1656, (4*4+3)^3 = 19^3 = 6859 ✓
-      -- For m=5 (n ∈ [25,35]): 3*35*34 = 3570, (4*5+3)^3 = 23^3 = 12167 ✓
-      -- For m=10 (n ∈ [100,120]): 3*120*119 = 42840, (4*10+3)^3 = 43^3 = 79507 ✓
-      -- For m=20 (n ∈ [400,440]): 3*440*439 = 579480, (4*20+3)^3 = 83^3 = 571787
-      -- 579480 > 571787 ✗! Fails for m=20!
-
-      -- So this approach fails for m ≥ 20 (n ≥ 400).
-      -- For m=19 (n ∈ [361,399]): 3*399*398 = 476406, (4*19+3)^3 = 79^3 = 493039 ✓
-      -- For m=20: need 3*440*439 ≤ 83^3 = 571787, but 579480 > 571787 ✗
-
-      -- So the approach works for n ≤ 399 (m ≤ 19) but fails for n ≥ 400.
-      -- For n ∈ [400, 550]: need a more refined bound
-
-      -- Given all this analysis, the most practical approach is:
-      -- Use interval_cases for n ≤ 399 (where the perfect square bound works)
-      -- and sorry for n ∈ [400, 550]
-
-      by_cases hn399 : n ≤ 399
-      · -- For 24 ≤ n ≤ 399: use perfect square lower bound on sqrt(n)
-        -- For each m from 4 to 19, for n in [m², (m+1)²-1]:
-        -- sqrt(n) ≥ m (since n ≥ m²)
-        -- So 4*sqrt(n)+3 ≥ 4m+3
-        -- And (4*sqrt(n)+3)³ ≥ (4m+3)³ (by pow_le_pow_left₀)
-        -- Need: 3n(n-1) ≤ (4m+3)³
-        -- Max of 3n(n-1) over n in [m², (m+1)²-1] is 3*((m+1)²-1)*((m+1)²-2)
-        -- Verify: 3*((m+1)²-1)*((m+1)²-2) ≤ (4m+3)³ for m = 4,...,19
-        
-        -- For m=4: 3*24*23=1656 ≤ 19³=6859
-        -- For m=19: 3*399*398=476406 ≤ 79³=493039
-        -- All verified numerically
-        
-        -- Strategy: use interval_cases on n, and for each n,
-        -- compute m = Nat.sqrt n, then verify 3*n*(n-1) ≤ (4*m+3)^3
-        -- and use Real.sqrt_le_sqrt to get sqrt(n) ≥ sqrt(m²) = m
-        
-        have h_nat_sqrt : ∀ n : ℕ, n ≥ 1 → Nat.sqrt n * Nat.sqrt n ≤ n := by
-          intro n hn
-          exact Nat.sqrt_le n
-        have h_nat_sqrt_le : ∀ n : ℕ, Nat.sqrt n * Nat.sqrt n ≤ n := fun n =>
-          Nat.sqrt_le n
-        
-        -- For n ≤ 399: Nat.sqrt n ≤ 19 (since 20² = 400 > 399)
-        have h_sr_le_19 : Nat.sqrt n ≤ 19 := by
-          have h400 : n < 400 := by omega
-          have : Nat.sqrt n < 20 := Nat.sqrt_lt'.mpr (by omega : n < 20^2)
-          omega
-        sorry
-      · -- For n ∈ [400, 550]: use interval_cases with finer sqrt bounds
-        -- For n in [400, 440]: sqrt(n) ≥ 20, (4*20+3)^3 = 83^3 = 571787
-        -- 3*440*439 = 579480 > 571787, so this doesn't work!
-        -- Need sqrt(n) ≥ 20.5 for n ≥ 420: (4*20.5+3)^3 = 85^3 = 614125
-        -- But we can't prove sqrt(420) ≥ 20.5 easily
-        -- Alternative: use that 3*420*419 = 527940 ≤ 85^3 = 614125 ✓
-        -- And sqrt(420) ≥ 20 (from 420 ≥ 400 = 20²)
-        -- So (4*sqrt(420)+3)³ ≥ (4*20+3)³ = 83³ = 571787
-        -- But 3*420*419 = 527940 ≤ 571787 ✓ (works for n ≤ ~437)
-        -- For n ≥ 438: 3*438*437 = 573762 > 571787 ✗
-        -- Need sqrt(n) ≥ 21 for n ≥ 441: (4*21+3)³ = 87³ = 658503
-        -- 3*550*549 = 905850 > 658503 ✗
-        -- For n ≥ 529: sqrt(n) ≥ 23: (4*23+3)³ = 95³ = 857375
-        -- 3*550*549 = 905850 > 857375 ✗
-        -- For n ≥ 576: sqrt(n) ≥ 24: (4*24+3)³ = 99³ = 970299
-        -- 3*550*549 = 905850 ≤ 970299 ✓ (but n ≤ 550 < 576)
-        
-        -- So for n ∈ [400, 550], we need finer bounds:
-        -- n ∈ [400, 437]: sqrt ≥ 20, 3n(n-1) ≤ 3*437*436 = 570756 ≤ 571787 = 83³ ✓
-        -- n ∈ [438, 440]: sqrt ≥ 20, 3*440*439 = 579480 > 571787 ✗
-        -- n ∈ [441, 483]: sqrt ≥ 21, 3*483*482 = 698838 ≤ 658503 ✗ (698838 > 658503!)
-        -- Actually 3*441*440 = 582120 ≤ 658503 ✓, but 3*483*482 = 698838 > 658503 ✗
-        -- n ∈ [441, 467]: 3*467*466 = 652866 ≤ 658503 ✓
-        -- n ∈ [468, 483]: need sqrt ≥ 21.5, (4*21.5+3)³ ≈ 89³ = 704969
-        -- 3*483*482 = 698838 ≤ 704969 ✓ (but can't prove sqrt ≥ 21.5)
-        
-        -- This is getting extremely tedious. The fundamental problem is
-        -- that for large n, we need fractional sqrt bounds which are
-        -- very hard to prove in Lean without Real.sqrt computation.
-        
-        -- Given the enormous effort already spent, let's accept sorry here.
-        sorry
-    · -- For n ≥ 551: need partitioning argument
+    · -- n ≤ 550
+      by_cases hn543 : n ≤ 543
+      · -- n ≤ 543: Nat.sqrt bound works
+        -- (k-1)^3 ≤ 3n(n-1) ≤ (4*Nat.sqrt(n)+4)^3 ≤ (4*Real.sqrt(n)+4)^3
+        -- So k ≤ 4*Real.sqrt(n)+4
+        -- Use interval_cases on n with ranges
+        interval_cases n <;>
+          { -- For each n in [24, 543]:
+            -- 1. (k-1)^3 ≤ 3*n*(n-1) (from h_sum_sq)
+            -- 2. 3*n*(n-1) ≤ (4*Nat.sqrt(n)+4)^3
+            -- 3. (4*Nat.sqrt(n)+4)^3 ≤ (4*Real.sqrt(n)+4)^3 (since Real.sqrt ≥ Nat.sqrt)
+            -- 4. So (k-1)^3 ≤ (4*Real.sqrt(n)+4)^3, k ≤ 4*Real.sqrt(n)+4
+            sorry }
+      · -- n ∈ [544, 550]: use Real.sqrt(n) ≥ 93/4
+        -- (93/4)^2 = 8649/16 = 540.5625 ≤ 544 ≤ n
+        -- So sqrt(n) ≥ 93/4, 4*sqrt(n)+4 ≥ 97
+        -- (k-1)^3 ≤ 3n(n-1) ≤ 3*550*549 = 905850 ≤ 912673 = 97^3
+        -- So k-1 ≤ 96, k ≤ 97 ≤ 4*sqrt(n)+4
+        have h_sqrt : (93 / 4 : ℝ) ≤ Real.sqrt n := by
+          have h_n_ge : (544 : ℝ) ≤ n := by exact_mod_cast (by omega : 544 ≤ n)
+          have h_sq : (93/4 : ℝ)^2 = 8649/16 := by norm_num
+          have h_le : (8649/16 : ℝ) ≤ 544 := by norm_num
+          have h_chain : (93/4 : ℝ)^2 ≤ n := by
+            rw [h_sq]; linarith
+          -- sqrt(x) ≥ y when y ≥ 0 and y^2 ≤ x
+          -- Use: Real.sqrt_le_sqrt gives sqrt(a) ≤ sqrt(b) when a ≤ b
+          -- We need: y ≤ sqrt(x), i.e., sqrt(y^2) ≤ sqrt(x), i.e., y^2 ≤ x
+          have h_y_pos : (0 : ℝ) ≤ 93/4 := by norm_num
+          have h_y_sqrt : Real.sqrt ((93/4 : ℝ)^2) = 93/4 := by
+            rw [Real.sqrt_sq h_y_pos]
+          have h_chain2 : Real.sqrt ((93/4 : ℝ)^2) ≤ Real.sqrt n :=
+            Real.sqrt_le_sqrt h_chain
+          rw [h_y_sqrt] at h_chain2
+          exact h_chain2
+        have h_97 : (97 : ℝ) ≤ 4 * Real.sqrt n + 4 := by linarith
+        have h_97_cube : (97 : ℝ)^3 ≤ (4 * Real.sqrt n + 4)^3 :=
+          pow_le_pow_left₀ (by norm_num : (0:ℝ) ≤ 97) h_97 3
+        have h_3n_max : (3 : ℝ) * 550 * 549 ≤ 97^3 := by norm_num
+        have h_3n : (3 : ℝ) * n * (n - 1) ≤ 97^3 := by
+          have h_n_r : (n : ℝ) ≤ 550 := by exact_mod_cast (by omega : n ≤ 550)
+          have h_n1_r : ((n - 1 : ℕ) : ℝ) ≤ 549 := by exact_mod_cast (by omega : n - 1 ≤ 549)
+          nlinarith
+        -- (k-1)^3 ≤ 3n(n-1) ≤ 97^3 ≤ (4*sqrt(n)+4)^3
+        -- So k-1 ≤ 97, k ≤ 98 ≤ 4*sqrt(n)+4 (since sqrt(n) ≥ 93/4, 4*93/4+4=97, 98 ≤ 97? No!)
+        -- Wait: k-1 ≤ (3n(n-1))^(1/3) ≤ 97, so k ≤ 98
+        -- But 4*sqrt(n)+4 ≥ 97, and 98 > 97. So k ≤ 98 > 97 = 4*sqrt(n)+4-1
+        -- This is off by one!
+        -- Fix: (k-1)^3 ≤ 3n(n-1) ≤ 97^3, so k-1 ≤ 97, k ≤ 98
+        -- Need 98 ≤ 4*sqrt(n)+4, i.e., sqrt(n) ≥ 94/4 = 23.5
+        -- (23.5)^2 = 552.25 ≤ 544? No! 552.25 > 544
+        -- So sqrt(544) < 23.5, and 4*sqrt(544)+4 < 98
+        -- This approach fails!
+        -- Better: use 94/4 = 47/2, (47/2)^2 = 2209/4 = 552.25
+        -- 552.25 ≤ n for n ≥ 553, but we need n ≥ 544
+        -- So 47/2 doesn't work for n ∈ [544, 552]
+        -- Need a different approach for n ∈ [544, 550]
+        -- Use: (k-1)^3 ≤ 3n(n-1) ≤ (4*Nat.sqrt(n)+4)^3
+        -- For n ∈ [544, 550]: Nat.sqrt(n) = 23 (since 23^2=529 ≤ n < 576=24^2)
+        -- (4*23+4)^3 = 96^3 = 884736
+        -- 3*550*549 = 905850 > 884736 ✗!
+        -- Fails! So Nat.sqrt(23) bound is too weak for n ∈ [544, 550]
+        -- Need Real.sqrt bound: sqrt(n) ≥ 23 + delta for some delta > 0
+        -- sqrt(544) ≈ 23.32, 4*23.32+4 = 97.3
+        -- Need: (k-1)^3 ≤ 3n(n-1) ≤ 97^3 = 912673
+        -- 3*550*549 = 905850 ≤ 912673 ✓
+        -- So (k-1) ≤ 97, k ≤ 98
+        -- Need: 98 ≤ 4*sqrt(n)+4, i.e., sqrt(n) ≥ 94/4 = 23.5
+        -- But sqrt(544) ≈ 23.32 < 23.5, so 4*sqrt(544)+4 ≈ 97.3 < 98 ✗!
+        -- Fails for n=544!
+        -- For n=548: sqrt(548) ≈ 23.41, 4*23.41+4 = 97.6 < 98 ✗
+        -- For n=553: sqrt(553) ≈ 23.52, 4*23.52+4 = 98.1 ≥ 98 ✓
+        -- But we need n ≤ 550, so this doesn't help
+        -- For n ∈ [544, 550]: need k ≤ 97, not 98
+        -- (k-1)^3 ≤ 3n(n-1) ≤ 97^3, so k-1 ≤ 97, k ≤ 98
+        -- But 97^3 = 912673, and 3*550*549 = 905850 ≤ 912673
+        -- So (k-1)^3 ≤ 905850 < 97^3, so k-1 < 97, k-1 ≤ 96, k ≤ 97
+        -- And 4*sqrt(n)+4 ≥ 4*93/4+4 = 97 ✓!
+        -- Wait: (k-1)^3 ≤ 905850, and 96^3 = 884736 < 905850
+        -- So (k-1)^3 ≤ 905850 doesn't give k-1 ≤ 96!
+        -- 97^3 = 912673 > 905850, so k-1 < 97, k-1 ≤ 96, k ≤ 97
+        -- 4*sqrt(n)+4 ≥ 97 (from sqrt(n) ≥ 93/4)
+        -- So k ≤ 97 ≤ 4*sqrt(n)+4 ✓!
+        -- The key: 3*550*549 = 905850 < 912673 = 97^3
+        -- So (k-1)^3 ≤ 905850 < 97^3, k-1 < 97, k ≤ 97
+        -- And 97 ≤ 4*sqrt(n)+4 ✓
+        -- This works!
+        have h_k_le_97 : (a.length : ℝ) ≤ 97 := by
+          -- (k-1)^3 ≤ 3n(n-1) ≤ 3*550*549 = 905850 < 912673 = 97^3
+          -- So k-1 < 97, k ≤ 97
+          sorry
+        linarith
+    · -- n ≥ 551: need partitioning argument
       sorry
   exact h_cs
 
