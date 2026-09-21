@@ -1416,7 +1416,17 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
                   interval_cases n <;> native_decide
                 have h_al := h_ceil_partition 105 h_sum
                 exact le_trans (by exact_mod_cast h_al) h_tm
-              · -- n >= 646: need partitioning
+              · -- n >= 646: partition argument (gap_count + sum_inv_sq_lt_two)
+                set r := Nat.sqrt n + 1 with hr_def
+                have hr_sq : n < r * r := by
+                  rw [hr_def]; exact Nat.lt_succ_sqrt n
+                have h_4r : (4 * r : ℝ) ≤ 4 * Real.sqrt n + 4 := by
+                  have h_nat : (Nat.sqrt n : ℝ) ≤ Real.sqrt n := h_sqrt_ge_nat
+                  rw [hr_def]; push_cast; linarith
+                -- Partition: layer m (m*r ≤ a_i < (m+1)*r) has gap ≥ m²
+                -- Layer m size ≤ r/m² + 1 (by gap_count)
+                -- Total ≤ r + Σ(r/m² + 1) ≤ r + 2r + r = 4r (by sum_inv_sq_lt_two)
+                -- a.length ≤ 4r ≤ 4*sqrt(n) + 4
                 sorry
 
 end
