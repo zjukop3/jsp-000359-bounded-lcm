@@ -146,6 +146,25 @@ lemma sq_le_mul_diff_of_lcm {a b n : ℕ} (ha : 0 < a) (hab : a < b)
 
   linarith [h3, h4, h5]
 
+def iterate_ceil (n : ℕ) : ℕ → ℕ
+  | 0 => 1
+  | k + 1 =>
+    let prev := iterate_ceil n k
+    prev + (prev * prev + n - 1) / n
+
+lemma sq_le_mul_diff_of_lcm_nat {a b n : ℕ} (ha : 0 < a) (hab : a < b)
+    (hlcm : Nat.lcm a b ≤ n) :
+    a * a ≤ n * (b - a) := by
+  have hgcd_le : Nat.gcd a b ≤ b - a := gcd_le_diff hab
+  have heq : Nat.gcd a b * Nat.lcm a b = a * b := Nat.gcd_mul_lcm a b
+  have h1 : Nat.gcd a b * Nat.lcm a b ≤ (b - a) * Nat.lcm a b :=
+    Nat.mul_le_mul_right _ hgcd_le
+  have h2 : (b - a) * Nat.lcm a b ≤ (b - a) * n := Nat.mul_le_mul_left _ hlcm
+  have h_le : a * b ≤ (b - a) * n := by rw [← heq]; exact le_trans h1 h2
+  have h3 : a * a ≤ a * b := Nat.mul_le_mul_left _ (Nat.le_of_lt hab)
+  have h_le' : a * b ≤ n * (b - a) := by nlinarith [h_le]
+  exact le_trans h3 h_le'
+
 
 
 lemma gap_count {g B : ℕ} (hg : 0 < g) (l : List ℕ)
