@@ -797,6 +797,27 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
           (a.get ⟨j + 1, hj⟩ - a.get ⟨j, hj'⟩) =
           a.get ⟨j + 1, hj⟩ - a.get ⟨0, by omega⟩ := by omega
       nlinarith
+
+  have h_ceil_partition : ∀ (target_m : ℕ),
+      ((List.range target_m).map (fun j => ((j+1)^2 + n - 1) / n)).sum > n - 1 →
+      a.length ≤ target_m := by
+    intro target_m h_sum
+    by_contra h_neg
+    push_neg at h_neg
+    have h_idx : target_m < a.length := by omega
+    have h_cs := h_ceil_sum_ind target_m h_idx
+    have h_le : a.get ⟨target_m, h_idx⟩ ≤ n := by
+      have hmem : a.get ⟨target_m, h_idx⟩ ∈ a := by simp [List.getElem_mem]
+      exact ha_le _ hmem
+    have h_0 : 1 ≤ a.get ⟨0, by omega⟩ := by
+      have hmem : a.get ⟨0, by omega⟩ ∈ a := by simp [List.getElem_mem]
+      exact ha_pos _ hmem
+    have h_diff : a.get ⟨target_m, h_idx⟩ - a.get ⟨0, by omega⟩ ≤ n - 1 := by omega
+    have h_ceil_le : ((List.range target_m).map
+        (fun i => ((i + 1)^2 + n - 1) / n)).sum ≤ n - 1 := by linarith
+    linarith
+
+
   -- Apply h_cauchy_exact for n in [24, 577]
   by_cases hn577 : n ≤ 577
   · -- n in [24, 577]: exact Cauchy-Schwarz with per-range K values
@@ -1287,9 +1308,116 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
                   · -- n >= 576
                     -- [576, 577]: K=100
                     exact h_cauchy_exact 100 576 577 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
-  · -- n >= 578: Cauchy-Schwarz bound exceeds 4*sqrt(n)+4
-    -- Need partitioning argument (gap_count + sum_inv_sq_lt_two)
-    sorry
+  · -- n >= 578: ceil bound for [578, 645], sorry for n >= 646
+    by_cases hn : n ≤ 588
+    · -- [578, 588]: tm=100, S=96
+      have h_sqrt : (96 / 4 : ℝ) ≤ Real.sqrt n := by
+        have h_sq : (96/4 : ℝ)^2 ≤ n := by
+          have : (96/4 : ℝ)^2 = 9216/16 := by norm_num
+          rw [this]
+          have : (578 : ℝ) ≤ n := by exact_mod_cast (by omega : 578 ≤ n)
+          norm_num; linarith
+        have h_y_pos : 0 ≤ (96/4 : ℝ) := by norm_num
+        have h_y_sqrt : Real.sqrt ((96/4 : ℝ)^2) = 96/4 := Real.sqrt_sq h_y_pos
+        have h_2 : Real.sqrt ((96/4 : ℝ)^2) ≤ Real.sqrt n := Real.sqrt_le_sqrt h_sq
+        rw [h_y_sqrt] at h_2; exact h_2
+      have h_tm : (100 : ℝ) ≤ 4 * Real.sqrt n + 4 := by linarith
+      have h_sum : ((List.range 100).map (fun j => ((j+1)^2 + n - 1) / n)).sum > n - 1 := by
+        interval_cases n <;> native_decide
+      have h_al := h_ceil_partition 100 h_sum
+      exact le_trans (by exact_mod_cast h_al) h_tm
+    · -- n >= 589
+      by_cases hn : n ≤ 600
+      · -- [589, 600]: tm=101, S=97
+        have h_sqrt : (97 / 4 : ℝ) ≤ Real.sqrt n := by
+          have h_sq : (97/4 : ℝ)^2 ≤ n := by
+            have : (97/4 : ℝ)^2 = 9409/16 := by norm_num
+            rw [this]
+            have : (589 : ℝ) ≤ n := by exact_mod_cast (by omega : 589 ≤ n)
+            norm_num; linarith
+          have h_y_pos : 0 ≤ (97/4 : ℝ) := by norm_num
+          have h_y_sqrt : Real.sqrt ((97/4 : ℝ)^2) = 97/4 := Real.sqrt_sq h_y_pos
+          have h_2 : Real.sqrt ((97/4 : ℝ)^2) ≤ Real.sqrt n := Real.sqrt_le_sqrt h_sq
+          rw [h_y_sqrt] at h_2; exact h_2
+        have h_tm : (101 : ℝ) ≤ 4 * Real.sqrt n + 4 := by linarith
+        have h_sum : ((List.range 101).map (fun j => ((j+1)^2 + n - 1) / n)).sum > n - 1 := by
+          interval_cases n <;> native_decide
+        have h_al := h_ceil_partition 101 h_sum
+        exact le_trans (by exact_mod_cast h_al) h_tm
+      · -- n >= 601
+        by_cases hn : n ≤ 612
+        · -- [601, 612]: tm=102, S=98
+          have h_sqrt : (98 / 4 : ℝ) ≤ Real.sqrt n := by
+            have h_sq : (98/4 : ℝ)^2 ≤ n := by
+              have : (98/4 : ℝ)^2 = 9604/16 := by norm_num
+              rw [this]
+              have : (601 : ℝ) ≤ n := by exact_mod_cast (by omega : 601 ≤ n)
+              norm_num; linarith
+            have h_y_pos : 0 ≤ (98/4 : ℝ) := by norm_num
+            have h_y_sqrt : Real.sqrt ((98/4 : ℝ)^2) = 98/4 := Real.sqrt_sq h_y_pos
+            have h_2 : Real.sqrt ((98/4 : ℝ)^2) ≤ Real.sqrt n := Real.sqrt_le_sqrt h_sq
+            rw [h_y_sqrt] at h_2; exact h_2
+          have h_tm : (102 : ℝ) ≤ 4 * Real.sqrt n + 4 := by linarith
+          have h_sum : ((List.range 102).map (fun j => ((j+1)^2 + n - 1) / n)).sum > n - 1 := by
+            interval_cases n <;> native_decide
+          have h_al := h_ceil_partition 102 h_sum
+          exact le_trans (by exact_mod_cast h_al) h_tm
+        · -- n >= 613
+          by_cases hn : n ≤ 624
+          · -- [613, 624]: tm=103, S=99
+            have h_sqrt : (99 / 4 : ℝ) ≤ Real.sqrt n := by
+              have h_sq : (99/4 : ℝ)^2 ≤ n := by
+                have : (99/4 : ℝ)^2 = 9801/16 := by norm_num
+                rw [this]
+                have : (613 : ℝ) ≤ n := by exact_mod_cast (by omega : 613 ≤ n)
+                norm_num; linarith
+              have h_y_pos : 0 ≤ (99/4 : ℝ) := by norm_num
+              have h_y_sqrt : Real.sqrt ((99/4 : ℝ)^2) = 99/4 := Real.sqrt_sq h_y_pos
+              have h_2 : Real.sqrt ((99/4 : ℝ)^2) ≤ Real.sqrt n := Real.sqrt_le_sqrt h_sq
+              rw [h_y_sqrt] at h_2; exact h_2
+            have h_tm : (103 : ℝ) ≤ 4 * Real.sqrt n + 4 := by linarith
+            have h_sum : ((List.range 103).map (fun j => ((j+1)^2 + n - 1) / n)).sum > n - 1 := by
+              interval_cases n <;> native_decide
+            have h_al := h_ceil_partition 103 h_sum
+            exact le_trans (by exact_mod_cast h_al) h_tm
+          · -- n >= 625
+            by_cases hn : n ≤ 637
+            · -- [625, 637]: tm=104, S=100
+              have h_sqrt : (100 / 4 : ℝ) ≤ Real.sqrt n := by
+                have h_sq : (100/4 : ℝ)^2 ≤ n := by
+                  have : (100/4 : ℝ)^2 = 10000/16 := by norm_num
+                  rw [this]
+                  have : (625 : ℝ) ≤ n := by exact_mod_cast (by omega : 625 ≤ n)
+                  norm_num; linarith
+                have h_y_pos : 0 ≤ (100/4 : ℝ) := by norm_num
+                have h_y_sqrt : Real.sqrt ((100/4 : ℝ)^2) = 100/4 := Real.sqrt_sq h_y_pos
+                have h_2 : Real.sqrt ((100/4 : ℝ)^2) ≤ Real.sqrt n := Real.sqrt_le_sqrt h_sq
+                rw [h_y_sqrt] at h_2; exact h_2
+              have h_tm : (104 : ℝ) ≤ 4 * Real.sqrt n + 4 := by linarith
+              have h_sum : ((List.range 104).map (fun j => ((j+1)^2 + n - 1) / n)).sum > n - 1 := by
+                interval_cases n <;> native_decide
+              have h_al := h_ceil_partition 104 h_sum
+              exact le_trans (by exact_mod_cast h_al) h_tm
+            · -- n >= 638
+              by_cases hn : n ≤ 645
+              · -- [638, 645]: tm=105, S=101
+                have h_sqrt : (101 / 4 : ℝ) ≤ Real.sqrt n := by
+                  have h_sq : (101/4 : ℝ)^2 ≤ n := by
+                    have : (101/4 : ℝ)^2 = 10201/16 := by norm_num
+                    rw [this]
+                    have : (638 : ℝ) ≤ n := by exact_mod_cast (by omega : 638 ≤ n)
+                    norm_num; linarith
+                  have h_y_pos : 0 ≤ (101/4 : ℝ) := by norm_num
+                  have h_y_sqrt : Real.sqrt ((101/4 : ℝ)^2) = 101/4 := Real.sqrt_sq h_y_pos
+                  have h_2 : Real.sqrt ((101/4 : ℝ)^2) ≤ Real.sqrt n := Real.sqrt_le_sqrt h_sq
+                  rw [h_y_sqrt] at h_2; exact h_2
+                have h_tm : (105 : ℝ) ≤ 4 * Real.sqrt n + 4 := by linarith
+                have h_sum : ((List.range 105).map (fun j => ((j+1)^2 + n - 1) / n)).sum > n - 1 := by
+                  interval_cases n <;> native_decide
+                have h_al := h_ceil_partition 105 h_sum
+                exact le_trans (by exact_mod_cast h_al) h_tm
+              · -- n >= 646: need partitioning
+                sorry
 
 end
 end BoundedLcm
