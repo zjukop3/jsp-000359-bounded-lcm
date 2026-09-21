@@ -752,6 +752,51 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
         exact absurd h_cubic (not_lt.mpr h5)
       omega
     exact le_trans (by exact_mod_cast h_al) h_K_le
+  -- ceil bound: d_i ≥ ((i+1)^2 + n - 1) / n
+  have h_ceil_bound : ∀ (i : ℕ) (hi : i + 1 < a.length),
+      ((i + 1)^2 + n - 1) / n ≤
+      a.get ⟨i + 1, hi⟩ - a.get ⟨i, Nat.lt_of_succ_lt hi⟩ := by
+    intro i hi
+    have hi' := Nat.lt_of_succ_lt hi
+    have h_sq := h_sq_bound i hi
+    have hn : 0 < n := by omega
+    set D := a.get ⟨i + 1, hi⟩ - a.get ⟨i, hi'⟩ with hD
+    set C := ((i + 1)^2 + n - 1) / n with hC
+    by_contra h_neg
+    push_neg at h_neg
+    have h_c_le : n * C ≤ (i + 1)^2 + n - 1 := Nat.mul_div_le _ n
+    have h_d1_le_c : D + 1 ≤ C := by omega
+    have h_n_d1_le_nc : n * (D + 1) ≤ n * C := Nat.mul_le_mul_left _ h_d1_le_c
+    have h_n_d1_le : n * (D + 1) ≤ (i + 1)^2 + n - 1 := by linarith
+    have h_n_d1_ge : n * (D + 1) ≥ (i + 1)^2 + n := by
+      have h1 : n * (D + 1) = n * D + n := by ring
+      linarith [h_sq, h1]
+    have h_contra : (i + 1)^2 + n ≤ (i + 1)^2 + n - 1 :=
+      le_trans h_n_d1_ge h_n_d1_le
+    omega
+  -- Inductive sum of ceil bounds: Σ ceil ≤ a_j - a_0
+  have h_ceil_sum_ind : ∀ (j : ℕ) (hj : j < a.length),
+      ((List.range j).map (fun i => ((i + 1)^2 + n - 1) / n)).sum ≤
+      a.get ⟨j, hj⟩ - a.get ⟨0, by omega⟩ := by
+    intro j hj
+    induction j with
+    | zero => simp
+    | succ j ih =>
+      have hj' : j < a.length := Nat.lt_of_succ_lt hj
+      have hprev := ih hj'
+      rw [List.range_succ, List.map_append, List.map_singleton,
+          List.sum_append, List.sum_singleton]
+      have hceil := h_ceil_bound j hj
+      have hle01 : a.get ⟨0, by omega⟩ ≤ a.get ⟨j, hj'⟩ := by
+        match j with
+        | 0 => simp
+        | j+1 => exact (ha_sorted.strictMono_get (Nat.succ_pos j)).le
+      have hle12 : a.get ⟨j, hj'⟩ ≤ a.get ⟨j + 1, hj⟩ :=
+        (ha_sorted.strictMono_get (by omega : j < j + 1)).le
+      have h_split : a.get ⟨j, hj'⟩ - a.get ⟨0, by omega⟩ +
+          (a.get ⟨j + 1, hj⟩ - a.get ⟨j, hj'⟩) =
+          a.get ⟨j + 1, hj⟩ - a.get ⟨0, by omega⟩ := by omega
+      nlinarith
   -- Apply h_cauchy_exact for n in [24, 577]
   by_cases hn577 : n ≤ 577
   · -- n in [24, 577]: exact Cauchy-Schwarz with per-range K values
@@ -1197,8 +1242,48 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
                 · -- n >= 574
                   by_cases hn : n < 576
                   · -- n <= 575
-                    -- FAIL [574, 575]
-                    sorry
+                    -- FAIL [574, 575]: use ceil bound to prove a.length ≤ 98
+                    have h_sqrt_98 : (98 : ℝ) ≤ 4 * Real.sqrt n + 4 := by
+                      have h_S : (94 / 4 : ℝ) ≤ Real.sqrt n := by
+                        have h_sq : (94/4 : ℝ)^2 = 8836/16 := by norm_num
+                        have h_chain : (94/4 : ℝ)^2 ≤ n := by
+                          have h_eq : (94/4 : ℝ)^2 = 8836/16 := by norm_num
+                          rw [h_eq]
+                          have : (574 : ℝ) ≤ n := by exact_mod_cast (by omega : 574 ≤ n)
+                          norm_num; linarith
+                        have h_y_pos : 0 ≤ (94/4 : ℝ) := by norm_num
+                        have h_y_sqrt : Real.sqrt ((94/4 : ℝ)^2) = 94/4 := Real.sqrt_sq h_y_pos
+                        have h_2 : Real.sqrt ((94/4 : ℝ)^2) ≤ Real.sqrt n := Real.sqrt_le_sqrt h_chain
+                        rw [h_y_sqrt] at h_2; exact h_2
+                      linarith
+                    by_contra h_neg
+                    push_neg at h_neg
+                    have h_98_idx : 98 < a.length := by
+                      have : (98 : ℝ) < (a.length : ℝ) := by linarith [h_sqrt_98, h_neg]
+                      exact_mod_cast this
+                    have h_ceil_sum := h_ceil_sum_ind 98 h_98_idx
+                    have h_98_le : a.get ⟨98, h_98_idx⟩ ≤ n := by
+                      have hmem : a.get ⟨98, h_98_idx⟩ ∈ a := by simp [List.getElem_mem]
+                      exact ha_le _ hmem
+                    have h_0_ge : 1 ≤ a.get ⟨0, by omega⟩ := by
+                      have hmem : a.get ⟨0, by omega⟩ ∈ a := by simp [List.getElem_mem]
+                      exact ha_pos _ hmem
+                    have h_diff_le_2 : a.get ⟨98, h_98_idx⟩ - a.get ⟨0, by omega⟩ ≤ n - 1 := by omega
+                    have h_ceil_le : ((List.range 98).map
+                        (fun i => ((i + 1)^2 + n - 1) / n)).sum ≤ n - 1 := by
+                      linarith [h_ceil_sum, h_diff_le_2]
+                    have h_574_575 : n = 574 ∨ n = 575 := by omega
+                    cases h_574_575 with
+                    | inl hn574 =>
+                      subst hn574
+                      have h_gt : ((List.range 98).map
+                          (fun i => ((i + 1)^2 + 574 - 1) / 574)).sum > 574 - 1 := by native_decide
+                      linarith [h_ceil_le, h_gt]
+                    | inr hn575 =>
+                      subst hn575
+                      have h_gt : ((List.range 98).map
+                          (fun i => ((i + 1)^2 + 575 - 1) / 575)).sum > 575 - 1 := by native_decide
+                      linarith [h_ceil_le, h_gt]
                   · -- n >= 576
                     -- [576, 577]: K=100
                     exact h_cauchy_exact 100 576 577 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
