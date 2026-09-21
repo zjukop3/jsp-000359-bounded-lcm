@@ -176,6 +176,7 @@ lemma sum_inv_sq_lt_two {r : ℕ} (hr : 1 ≤ r) :
       linarith
     linarith
 
+set_option maxHeartbeats 1000000 in
 theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
     (a : List ℕ)
     (ha_sorted : a.SortedLT)
@@ -340,11 +341,532 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
       have : (Nat.sqrt n : ℝ) * Nat.sqrt n = (Nat.sqrt n : ℝ)^2 := by rw [sq]
       rw [this, Real.sqrt_sq h_pos]
     linarith
-  -- n ≥ 24: Cauchy-Schwarz works for n ≤ ~550, partitioning needed for n ≥ 551
-  -- The sum argument (h_k3_le) gives (a.length-1)^3 ≤ 3n(n-1)
-  -- For n ≤ 550: (3n(n-1))^(1/3) + 1 ≤ 4*sqrt(n) + 4
-  -- For n ≥ 551: Cauchy-Schwarz bound exceeds 4*sqrt(n), need partitioning
-  sorry
+
+  -- Helper: for n in [lo, hi] with K, (K-4)^2 <= 16*lo, 3*hi*(hi-1) < K^3:
+  -- a.length <= K <= 4*sqrt(n) + 4
+  have h_cauchy : ∀ (K lo hi : ℕ), 4 ≤ K → lo ≤ n → n ≤ hi →
+      3 * hi * (hi - 1) < K^3 → (K - 4)^2 ≤ 16 * lo →
+      (a.length : ℝ) ≤ 4 * Real.sqrt n + 4 := by
+    intros K lo hi h_K4 h_lo h_hi h_K3 h_S2
+    have h_sq_real : ((K - 4 : ℕ) : ℝ)^2 ≤ 16 * n := by
+      have h1 : ((K - 4 : ℕ) : ℝ)^2 ≤ 16 * lo := by exact_mod_cast h_S2
+      have h2 : (16 * lo : ℝ) ≤ 16 * n := by
+        have : (lo : ℝ) ≤ n := by exact_mod_cast h_lo
+        nlinarith
+      linarith
+    have h_div_sq : ((K - 4 : ℕ) : ℝ) / 4 * (((K - 4 : ℕ) : ℝ) / 4) ≤ n := by
+      have h_eq : ((K - 4 : ℕ) : ℝ) / 4 * (((K - 4 : ℕ) : ℝ) / 4) =
+          ((K - 4 : ℕ) : ℝ)^2 / 16 := by ring
+      rw [h_eq, div_le_iff₀ (by norm_num : (0:ℝ) < 16)]
+      linarith [h_sq_real]
+    have h_y_pos : 0 ≤ ((K - 4 : ℕ) : ℝ) / 4 := by positivity
+    have h_sqrt : ((K - 4 : ℕ) : ℝ) / 4 ≤ Real.sqrt n := by
+      have h_y_sqrt : Real.sqrt (((K - 4 : ℕ) : ℝ) / 4 * (((K - 4 : ℕ) : ℝ) / 4)) =
+          ((K - 4 : ℕ) : ℝ) / 4 := by
+        rw [← sq]; exact Real.sqrt_sq h_y_pos
+      have h_chain : Real.sqrt (((K - 4 : ℕ) : ℝ) / 4 * (((K - 4 : ℕ) : ℝ) / 4)) ≤
+          Real.sqrt n := Real.sqrt_le_sqrt h_div_sq
+      rw [h_y_sqrt] at h_chain; exact h_chain
+    have h_K_le : (K : ℝ) ≤ 4 * Real.sqrt n + 4 := by
+      have h_K_eq : (K : ℝ) = ((K - 4 : ℕ) : ℝ) + 4 :=
+        by exact_mod_cast (by omega : K = (K - 4 : ℕ) + 4)
+      rw [h_K_eq]
+      have h4 : ((K - 4 : ℕ) : ℝ) = 4 * (((K - 4 : ℕ) : ℝ) / 4) := by ring
+      rw [h4]
+      have h1 : 4 * (((K - 4 : ℕ) : ℝ) / 4) ≤ 4 * Real.sqrt n := by gcongr
+      linarith [h1]
+    have h_3n : (3 : ℕ) * n * (n - 1) ≤ 3 * hi * (hi - 1) := by
+      have h1 : n ≤ hi := h_hi
+      have h2 : n - 1 ≤ hi - 1 := by omega
+      have h3 : 3 * n ≤ 3 * hi := Nat.mul_le_mul_left _ h1
+      exact Nat.mul_le_mul h3 h2
+    have h_cubic : (a.length - 1 : ℕ)^3 < K^3 :=
+      lt_of_le_of_lt (le_trans h_k3_le h_3n) h_K3
+    have h_al : a.length ≤ K := by
+      have h_lt : (a.length - 1 : ℕ) < K := by
+        by_contra h_neg; push_neg at h_neg
+        have h_ge : K^3 ≤ (a.length - 1 : ℕ)^3 := by
+          have h1 : K ≤ (a.length - 1 : ℕ) := h_neg
+          have h2 : K * K ≤ (a.length - 1) * (a.length - 1) :=
+            Nat.mul_le_mul h1 h1
+          have h3 : K * (K * K) ≤
+              (a.length - 1) * ((a.length - 1) * (a.length - 1)) :=
+            Nat.mul_le_mul h1 h2
+          have hk : K^3 = K * (K * K) := by
+            show K ^ (2 + 1) = K * (K * K)
+            rw [Nat.pow_succ]
+            show K ^ (1 + 1) * K = K * (K * K)
+            rw [Nat.pow_succ, Nat.pow_one]
+            ring
+          have hal : (a.length - 1 : ℕ)^3 =
+              (a.length - 1) * ((a.length - 1) * (a.length - 1)) := by
+            show (a.length - 1) ^ (2 + 1) = _
+            rw [Nat.pow_succ]
+            show (a.length - 1) ^ (1 + 1) * (a.length - 1) = _
+            rw [Nat.pow_succ, Nat.pow_one]
+            ring
+          rw [hk, hal]; exact h3
+        exact absurd h_cubic (not_lt.mpr h_ge)
+      omega
+    exact le_trans (by exact_mod_cast h_al) h_K_le
+  -- Apply h_cauchy for n in [24, 577]
+  by_cases hn577 : n ≤ 577
+  · -- n in [24, 577]: Cauchy-Schwarz with per-range K values
+    by_cases hn : n < 243
+    · -- n <= 242
+      by_cases hn : n < 110
+      · -- n <= 109
+        by_cases hn : n < 61
+        · -- n <= 60
+          by_cases hn : n < 38
+          · -- n <= 37
+            by_cases hn : n < 28
+            · -- n <= 27
+              by_cases hn : n < 25
+              · -- n <= 24
+                -- [24, 24]: K=12
+                exact h_cauchy 12 24 24 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 25
+                -- [25, 27]: K=13
+                exact h_cauchy 13 25 27 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+            · -- n >= 28
+              by_cases hn : n < 31
+              · -- n <= 30
+                -- [28, 30]: K=14
+                exact h_cauchy 14 28 30 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 31
+                by_cases hn : n < 35
+                · -- n <= 34
+                  -- [31, 34]: K=15
+                  exact h_cauchy 15 31 34 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+                · -- n >= 35
+                  -- [35, 37]: K=16
+                  exact h_cauchy 16 35 37 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+          · -- n >= 38
+            by_cases hn : n < 49
+            · -- n <= 48
+              by_cases hn : n < 41
+              · -- n <= 40
+                -- [38, 40]: K=17
+                exact h_cauchy 17 38 40 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 41
+                by_cases hn : n < 45
+                · -- n <= 44
+                  -- [41, 44]: K=18
+                  exact h_cauchy 18 41 44 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+                · -- n >= 45
+                  -- [45, 48]: K=19
+                  exact h_cauchy 19 45 48 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+            · -- n >= 49
+              by_cases hn : n < 53
+              · -- n <= 52
+                -- [49, 52]: K=20
+                exact h_cauchy 20 49 52 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 53
+                by_cases hn : n < 57
+                · -- n <= 56
+                  -- [53, 56]: K=21
+                  exact h_cauchy 21 53 56 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+                · -- n >= 57
+                  -- [57, 60]: K=22
+                  exact h_cauchy 22 57 60 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+        · -- n >= 61
+          by_cases hn : n < 82
+          · -- n <= 81
+            by_cases hn : n < 69
+            · -- n <= 68
+              by_cases hn : n < 65
+              · -- n <= 64
+                -- [61, 64]: K=23
+                exact h_cauchy 23 61 64 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 65
+                -- [65, 68]: K=24
+                exact h_cauchy 24 65 68 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+            · -- n >= 69
+              by_cases hn : n < 73
+              · -- n <= 72
+                -- [69, 72]: K=25
+                exact h_cauchy 25 69 72 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 73
+                by_cases hn : n < 78
+                · -- n <= 77
+                  -- [73, 77]: K=26
+                  exact h_cauchy 26 73 77 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+                · -- n >= 78
+                  -- [78, 81]: K=27
+                  exact h_cauchy 27 78 81 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+          · -- n >= 82
+            by_cases hn : n < 96
+            · -- n <= 95
+              by_cases hn : n < 87
+              · -- n <= 86
+                -- [82, 86]: K=28
+                exact h_cauchy 28 82 86 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 87
+                by_cases hn : n < 91
+                · -- n <= 90
+                  -- [87, 90]: K=29
+                  exact h_cauchy 29 87 90 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+                · -- n >= 91
+                  -- [91, 95]: K=30
+                  exact h_cauchy 30 91 95 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+            · -- n >= 96
+              by_cases hn : n < 101
+              · -- n <= 100
+                -- [96, 100]: K=31
+                exact h_cauchy 31 96 100 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 101
+                by_cases hn : n < 106
+                · -- n <= 105
+                  -- [101, 105]: K=32
+                  exact h_cauchy 32 101 105 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+                · -- n >= 106
+                  -- [106, 109]: K=33
+                  exact h_cauchy 33 106 109 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+      · -- n >= 110
+        by_cases hn : n < 170
+        · -- n <= 169
+          by_cases hn : n < 136
+          · -- n <= 135
+            by_cases hn : n < 121
+            · -- n <= 120
+              by_cases hn : n < 115
+              · -- n <= 114
+                -- [110, 114]: K=34
+                exact h_cauchy 34 110 114 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 115
+                -- [115, 120]: K=35
+                exact h_cauchy 35 115 120 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+            · -- n >= 121
+              by_cases hn : n < 126
+              · -- n <= 125
+                -- [121, 125]: K=36
+                exact h_cauchy 36 121 125 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 126
+                by_cases hn : n < 131
+                · -- n <= 130
+                  -- [126, 130]: K=37
+                  exact h_cauchy 37 126 130 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+                · -- n >= 131
+                  -- [131, 135]: K=38
+                  exact h_cauchy 38 131 135 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+          · -- n >= 136
+            by_cases hn : n < 153
+            · -- n <= 152
+              by_cases hn : n < 142
+              · -- n <= 141
+                -- [136, 141]: K=39
+                exact h_cauchy 39 136 141 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 142
+                by_cases hn : n < 147
+                · -- n <= 146
+                  -- [142, 146]: K=40
+                  exact h_cauchy 40 142 146 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+                · -- n >= 147
+                  -- [147, 152]: K=41
+                  exact h_cauchy 41 147 152 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+            · -- n >= 153
+              by_cases hn : n < 158
+              · -- n <= 157
+                -- [153, 157]: K=42
+                exact h_cauchy 42 153 157 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 158
+                by_cases hn : n < 164
+                · -- n <= 163
+                  -- [158, 163]: K=43
+                  exact h_cauchy 43 158 163 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+                · -- n >= 164
+                  -- [164, 169]: K=44
+                  exact h_cauchy 44 164 169 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+        · -- n >= 170
+          by_cases hn : n < 205
+          · -- n <= 204
+            by_cases hn : n < 187
+            · -- n <= 186
+              by_cases hn : n < 175
+              · -- n <= 174
+                -- [170, 174]: K=45
+                exact h_cauchy 45 170 174 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 175
+                by_cases hn : n < 181
+                · -- n <= 180
+                  -- [175, 180]: K=46
+                  exact h_cauchy 46 175 180 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+                · -- n >= 181
+                  -- [181, 186]: K=47
+                  exact h_cauchy 47 181 186 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+            · -- n >= 187
+              by_cases hn : n < 193
+              · -- n <= 192
+                -- [187, 192]: K=48
+                exact h_cauchy 48 187 192 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 193
+                by_cases hn : n < 199
+                · -- n <= 198
+                  -- [193, 198]: K=49
+                  exact h_cauchy 49 193 198 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+                · -- n >= 199
+                  -- [199, 204]: K=50
+                  exact h_cauchy 50 199 204 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+          · -- n >= 205
+            by_cases hn : n < 224
+            · -- n <= 223
+              by_cases hn : n < 211
+              · -- n <= 210
+                -- [205, 210]: K=51
+                exact h_cauchy 51 205 210 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 211
+                by_cases hn : n < 217
+                · -- n <= 216
+                  -- [211, 216]: K=52
+                  exact h_cauchy 52 211 216 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+                · -- n >= 217
+                  -- [217, 223]: K=53
+                  exact h_cauchy 53 217 223 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+            · -- n >= 224
+              by_cases hn : n < 230
+              · -- n <= 229
+                -- [224, 229]: K=54
+                exact h_cauchy 54 224 229 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 230
+                by_cases hn : n < 236
+                · -- n <= 235
+                  -- [230, 235]: K=55
+                  exact h_cauchy 55 230 235 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+                · -- n >= 236
+                  -- [236, 242]: K=56
+                  exact h_cauchy 56 236 242 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+    · -- n >= 243
+      by_cases hn : n < 406
+      · -- n <= 405
+        by_cases hn : n < 318
+        · -- n <= 317
+          by_cases hn : n < 276
+          · -- n <= 275
+            by_cases hn : n < 256
+            · -- n <= 255
+              by_cases hn : n < 249
+              · -- n <= 248
+                -- [243, 248]: K=57
+                exact h_cauchy 57 243 248 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 249
+                -- [249, 255]: K=58
+                exact h_cauchy 58 249 255 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+            · -- n >= 256
+              by_cases hn : n < 263
+              · -- n <= 262
+                -- [256, 262]: K=59
+                exact h_cauchy 59 256 262 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 263
+                by_cases hn : n < 269
+                · -- n <= 268
+                  -- [263, 268]: K=60
+                  exact h_cauchy 60 263 268 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+                · -- n >= 269
+                  -- [269, 275]: K=61
+                  exact h_cauchy 61 269 275 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+          · -- n >= 276
+            by_cases hn : n < 297
+            · -- n <= 296
+              by_cases hn : n < 283
+              · -- n <= 282
+                -- [276, 282]: K=62
+                exact h_cauchy 62 276 282 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 283
+                by_cases hn : n < 290
+                · -- n <= 289
+                  -- [283, 289]: K=63
+                  exact h_cauchy 63 283 289 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+                · -- n >= 290
+                  -- [290, 296]: K=64
+                  exact h_cauchy 64 290 296 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+            · -- n >= 297
+              by_cases hn : n < 304
+              · -- n <= 303
+                -- [297, 303]: K=65
+                exact h_cauchy 65 297 303 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 304
+                by_cases hn : n < 311
+                · -- n <= 310
+                  -- [304, 310]: K=66
+                  exact h_cauchy 66 304 310 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+                · -- n >= 311
+                  -- [311, 317]: K=67
+                  exact h_cauchy 67 311 317 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+        · -- n >= 318
+          by_cases hn : n < 361
+          · -- n <= 360
+            by_cases hn : n < 339
+            · -- n <= 338
+              by_cases hn : n < 325
+              · -- n <= 324
+                -- [318, 324]: K=68
+                exact h_cauchy 68 318 324 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 325
+                by_cases hn : n < 332
+                · -- n <= 331
+                  -- [325, 331]: K=69
+                  exact h_cauchy 69 325 331 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+                · -- n >= 332
+                  -- [332, 338]: K=70
+                  exact h_cauchy 70 332 338 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+            · -- n >= 339
+              by_cases hn : n < 346
+              · -- n <= 345
+                -- [339, 345]: K=71
+                exact h_cauchy 71 339 345 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 346
+                by_cases hn : n < 354
+                · -- n <= 353
+                  -- [346, 353]: K=72
+                  exact h_cauchy 72 346 353 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+                · -- n >= 354
+                  -- [354, 360]: K=73
+                  exact h_cauchy 73 354 360 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+          · -- n >= 361
+            by_cases hn : n < 384
+            · -- n <= 383
+              by_cases hn : n < 369
+              · -- n <= 368
+                -- [361, 368]: K=74
+                exact h_cauchy 74 361 368 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 369
+                by_cases hn : n < 376
+                · -- n <= 375
+                  -- [369, 375]: K=75
+                  exact h_cauchy 75 369 375 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+                · -- n >= 376
+                  -- [376, 383]: K=76
+                  exact h_cauchy 76 376 383 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+            · -- n >= 384
+              by_cases hn : n < 391
+              · -- n <= 390
+                -- [384, 390]: K=77
+                exact h_cauchy 77 384 390 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 391
+                by_cases hn : n < 399
+                · -- n <= 398
+                  -- [391, 398]: K=78
+                  exact h_cauchy 78 391 398 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+                · -- n >= 399
+                  -- [399, 405]: K=79
+                  exact h_cauchy 79 399 405 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+      · -- n >= 406
+        by_cases hn : n < 494
+        · -- n <= 493
+          by_cases hn : n < 445
+          · -- n <= 444
+            by_cases hn : n < 422
+            · -- n <= 421
+              by_cases hn : n < 414
+              · -- n <= 413
+                -- [406, 413]: K=80
+                exact h_cauchy 80 406 413 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 414
+                -- [414, 421]: K=81
+                exact h_cauchy 81 414 421 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+            · -- n >= 422
+              by_cases hn : n < 430
+              · -- n <= 429
+                -- [422, 429]: K=82
+                exact h_cauchy 82 422 429 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 430
+                by_cases hn : n < 438
+                · -- n <= 437
+                  -- [430, 437]: K=83
+                  exact h_cauchy 83 430 437 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+                · -- n >= 438
+                  -- [438, 444]: K=84
+                  exact h_cauchy 84 438 444 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+          · -- n >= 445
+            by_cases hn : n < 470
+            · -- n <= 469
+              by_cases hn : n < 453
+              · -- n <= 452
+                -- [445, 452]: K=85
+                exact h_cauchy 85 445 452 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 453
+                by_cases hn : n < 461
+                · -- n <= 460
+                  -- [453, 460]: K=86
+                  exact h_cauchy 86 453 460 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+                · -- n >= 461
+                  -- [461, 469]: K=87
+                  exact h_cauchy 87 461 469 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+            · -- n >= 470
+              by_cases hn : n < 478
+              · -- n <= 477
+                -- [470, 477]: K=88
+                exact h_cauchy 88 470 477 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 478
+                by_cases hn : n < 486
+                · -- n <= 485
+                  -- [478, 485]: K=89
+                  exact h_cauchy 89 478 485 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+                · -- n >= 486
+                  -- [486, 493]: K=90
+                  exact h_cauchy 90 486 493 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+        · -- n >= 494
+          by_cases hn : n < 544
+          · -- n <= 543
+            by_cases hn : n < 519
+            · -- n <= 518
+              by_cases hn : n < 502
+              · -- n <= 501
+                -- [494, 501]: K=91
+                exact h_cauchy 91 494 501 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 502
+                by_cases hn : n < 510
+                · -- n <= 509
+                  -- [502, 509]: K=92
+                  exact h_cauchy 92 502 509 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+                · -- n >= 510
+                  -- [510, 518]: K=93
+                  exact h_cauchy 93 510 518 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+            · -- n >= 519
+              by_cases hn : n < 527
+              · -- n <= 526
+                -- [519, 526]: K=94
+                exact h_cauchy 94 519 526 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 527
+                by_cases hn : n < 536
+                · -- n <= 535
+                  -- [527, 535]: K=95
+                  exact h_cauchy 95 527 535 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+                · -- n >= 536
+                  -- [536, 543]: K=96
+                  exact h_cauchy 96 536 543 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+          · -- n >= 544
+            by_cases hn : n < 565
+            · -- n <= 564
+              by_cases hn : n < 553
+              · -- n <= 552
+                -- [544, 552]: K=97
+                exact h_cauchy 97 544 552 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 553
+                by_cases hn : n < 561
+                · -- n <= 560
+                  -- [553, 560]: K=98
+                  exact h_cauchy 98 553 560 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+                · -- n >= 561
+                  -- FAIL [561, 564]
+                  sorry
+            · -- n >= 565
+              by_cases hn : n < 570
+              · -- n <= 569
+                -- [565, 569]: K=99
+                exact h_cauchy 99 565 569 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+              · -- n >= 570
+                by_cases hn : n < 576
+                · -- n <= 575
+                  -- FAIL [570, 575]
+                  sorry
+                · -- n >= 576
+                  -- [576, 577]: K=100
+                  exact h_cauchy 100 576 577 (by norm_num) (by omega) (by omega) (by norm_num) (by norm_num)
+  · -- n >= 578: Cauchy-Schwarz bound exceeds 4*sqrt(n)+4
+    -- Need partitioning argument (gap_count + sum_inv_sq_lt_two)
+    sorry
 
 end
 end BoundedLcm
