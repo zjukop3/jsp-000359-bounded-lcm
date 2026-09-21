@@ -836,6 +836,55 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
         (fun i => ((i + 1)^2 + n - 1) / n)).sum ≤ n - 1 := by linarith
     linarith
 
+  -- iterate_ceil lower bound: a_{i+1} ≥ iterate_ceil(n, i)
+  have h_iter_lower : ∀ (i : ℕ) (hi : i < a.length),
+      iterate_ceil n i ≤ a.get ⟨i, hi⟩ := by
+    intro i hi
+    induction i with
+    | zero =>
+      show 1 ≤ a.get ⟨0, hi⟩
+      exact ha_pos _ (by simp [List.getElem_mem])
+    | succ i ih =>
+      have hi' := Nat.lt_of_succ_lt hi
+      have hprev := ih hi'
+      have h_ai_pos : 0 < a.get ⟨i, hi'⟩ := by
+        have hmem : a.get ⟨i, hi'⟩ ∈ a := by simp [List.getElem_mem]
+        exact ha_pos _ hmem
+      have h_ai_lt : a.get ⟨i, hi'⟩ < a.get ⟨i+1, hi⟩ :=
+        ha_sorted.strictMono_get (by omega : i < i + 1)
+      have h_lcm : Nat.lcm (a.get ⟨i, hi'⟩) (a.get ⟨i+1, hi⟩) ≤ n :=
+        ha_lcm i hi
+      have h_sq_nat : a.get ⟨i, hi'⟩ * a.get ⟨i, hi'⟩ ≤
+          n * (a.get ⟨i+1, hi⟩ - a.get ⟨i, hi'⟩) :=
+        sq_le_mul_diff_of_lcm_nat h_ai_pos h_ai_lt h_lcm
+      have h_iter_sq : iterate_ceil n i * iterate_ceil n i ≤
+          n * (a.get ⟨i+1, hi⟩ - a.get ⟨i, hi'⟩) := by
+        nlinarith [hprev, h_sq_nat]
+      have h_ceil_di : (iterate_ceil n i * iterate_ceil n i + n - 1) / n ≤
+          a.get ⟨i+1, hi⟩ - a.get ⟨i, hi'⟩ := by
+        have hn : 0 < n := by omega
+        by_contra h_neg
+        push_neg at h_neg
+        have h_c_le : n * ((iterate_ceil n i * iterate_ceil n i + n - 1) / n) ≤
+            iterate_ceil n i * iterate_ceil n i + n - 1 := Nat.mul_div_le _ n
+        set D := a.get ⟨i+1, hi⟩ - a.get ⟨i, hi'⟩ with hD
+        set C := (iterate_ceil n i * iterate_ceil n i + n - 1) / n with hC
+        have h_d1_le_c : D + 1 ≤ C := by omega
+        have h_n_d1_le : n * (D + 1) ≤ iterate_ceil n i * iterate_ceil n i + n - 1 := by
+          nlinarith [h_c_le, h_d1_le_c]
+        have h_n_d1_ge : n * (D + 1) ≥ iterate_ceil n i * iterate_ceil n i + n := by
+          have h1 : n * (D + 1) = n * D + n := by ring
+          rw [h1]; nlinarith [h_iter_sq]
+        have h_contra : (iterate_ceil n i * iterate_ceil n i + n) ≤
+            (iterate_ceil n i * iterate_ceil n i + n - 1) :=
+          le_trans h_n_d1_ge h_n_d1_le
+        omega
+      show iterate_ceil n i + (iterate_ceil n i * iterate_ceil n i + n - 1) / n
+        ≤ a.get ⟨i + 1, hi⟩
+      have h1 := Nat.add_le_add hprev h_ceil_di
+      have h2 : a.get ⟨i, hi'⟩ + (a.get ⟨i+1, hi⟩ - a.get ⟨i, hi'⟩) = a.get ⟨i+1, hi⟩ := by omega
+      exact le_trans h1 (le_of_eq h2)
+
 
   -- Apply h_cauchy_exact for n in [24, 577]
   by_cases hn577 : n ≤ 577
