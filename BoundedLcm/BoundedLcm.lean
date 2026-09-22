@@ -1538,14 +1538,30 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
                         interval_cases n <;> native_decide
                       have h_al := h_ceil_partition 107 h_sum
                       exact le_trans (by exact_mod_cast h_al) h_tm
-                    · -- n >= 675: partition argument (gap_count + sum_inv_sq_lt_two)
+                    · -- n >= 675: use iterate_ceil + native_decide
                       set r := Nat.sqrt n + 1 with hr_def
                       have hr_sq : n < r * r := by
                         rw [hr_def]; exact Nat.lt_succ_sqrt n
                       have h_4r : (4 * r : ℝ) ≤ 4 * Real.sqrt n + 4 := by
                         have h_nat : (Nat.sqrt n : ℝ) ≤ Real.sqrt n := h_sqrt_ge_nat
                         rw [hr_def]; push_cast; linarith
-                      sorry
+                      by_cases hn700 : n ≤ 700
+                      · -- n ∈ [675, 700]: verify with interval_cases + native_decide
+                        interval_cases n <;> {
+                          have h_iter_gt : iterate_ceil n (4 * Nat.sqrt n + 4) > n := by native_decide
+                          by_contra h_neg
+                          push_neg at h_neg
+                          have h_idx : 4 * Nat.sqrt n + 4 < a.length := by
+                            have : (4 * Nat.sqrt n + 4 : ℝ) < (a.length : ℝ) := by linarith
+                            exact_mod_cast this
+                          have h_iter := h_iter_lower (4 * Nat.sqrt n + 4) h_idx
+                          have h_le : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ≤ n := by
+                            have hmem : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ∈ a := by simp [List.getElem_mem]
+                            exact ha_le _ hmem
+                          linarith [h_iter, h_iter_gt, h_le]
+                        }
+                      · -- n > 700
+                        sorry
 
 end
 end BoundedLcm
