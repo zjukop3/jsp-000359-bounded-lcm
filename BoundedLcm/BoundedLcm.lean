@@ -1657,6 +1657,54 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
                                       linarith [h_iter, h_iter_gt, h_le]
                                     }
                                   · -- n > 850
+                                    by_cases hn900 : n ≤ 900
+                                    · -- n ∈ [851, 900]
+                                      interval_cases n <;> {
+                                        have h_iter_gt : iterate_ceil n (4 * Nat.sqrt n + 4) > n := by native_decide
+                                        by_contra h_neg
+                                        push_neg at h_neg
+                                        have h_idx : 4 * Nat.sqrt n + 4 < a.length := by
+                                          have : (4 * Nat.sqrt n + 4 : ℝ) < (a.length : ℝ) := by linarith
+                                          exact_mod_cast this
+                                        have h_iter := h_iter_lower (4 * Nat.sqrt n + 4) h_idx
+                                        have h_le : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ≤ n := by
+                                          have hmem : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ∈ a := by simp [List.getElem_mem]
+                                          exact ha_le _ hmem
+                                        linarith [h_iter, h_iter_gt, h_le]
+                                      }
+                                    · -- n > 900
+                                      by_cases hn950 : n ≤ 950
+                                      · -- n ∈ [901, 950]
+                                        interval_cases n <;> {
+                                          have h_iter_gt : iterate_ceil n (4 * Nat.sqrt n + 4) > n := by native_decide
+                                          by_contra h_neg
+                                          push_neg at h_neg
+                                          have h_idx : 4 * Nat.sqrt n + 4 < a.length := by
+                                            have : (4 * Nat.sqrt n + 4 : ℝ) < (a.length : ℝ) := by linarith
+                                            exact_mod_cast this
+                                          have h_iter := h_iter_lower (4 * Nat.sqrt n + 4) h_idx
+                                          have h_le : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ≤ n := by
+                                            have hmem : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ∈ a := by simp [List.getElem_mem]
+                                            exact ha_le _ hmem
+                                          linarith [h_iter, h_iter_gt, h_le]
+                                        }
+                                      · -- n > 950
+                                        by_cases hn1000 : n ≤ 1000
+                                        · -- n ∈ [951, 1000]
+                                          interval_cases n <;> {
+                                            have h_iter_gt : iterate_ceil n (4 * Nat.sqrt n + 4) > n := by native_decide
+                                            by_contra h_neg
+                                            push_neg at h_neg
+                                            have h_idx : 4 * Nat.sqrt n + 4 < a.length := by
+                                              have : (4 * Nat.sqrt n + 4 : ℝ) < (a.length : ℝ) := by linarith
+                                              exact_mod_cast this
+                                            have h_iter := h_iter_lower (4 * Nat.sqrt n + 4) h_idx
+                                            have h_le : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ≤ n := by
+                                              have hmem : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ∈ a := by simp [List.getElem_mem]
+                                              exact ha_le _ hmem
+                                            linarith [h_iter, h_iter_gt, h_le]
+                                          }
+                                        · -- n > 1000
                         sorry
 
 end
