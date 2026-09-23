@@ -152,6 +152,20 @@ def iterate_ceil (n : ℕ) : ℕ → ℕ
     let prev := iterate_ceil n k
     prev + (prev * prev + n - 1) / n
 
+def iterate_ceil_from (n f : ℕ) : ℕ → ℕ
+  | 0 => f
+  | k + 1 =>
+    let prev := iterate_ceil_from n f k
+    prev + (prev * prev + n - 1) / n
+
+lemma iterate_ceil_add (n : ℕ) : ∀ (j k : ℕ),
+    iterate_ceil n (j + k) = iterate_ceil_from n (iterate_ceil n j) k := by
+  intro j k
+  induction k with
+  | zero => simp [iterate_ceil_from, Nat.add_zero]
+  | succ k ih =>
+    simp [iterate_ceil, iterate_ceil_from, Nat.add_succ, ih]
+
 lemma sq_le_mul_diff_of_lcm_nat {a b n : ℕ} (ha : 0 < a) (hab : a < b)
     (hlcm : Nat.lcm a b ≤ n) :
     a * a ≤ n * (b - a) := by
@@ -1803,62 +1817,37 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
                                                   --   total ≤ r + Σ(r/(m²+1)+1) < r + 2r + r = 4r
                                                   -- Use sum_inv_sq_lt_two for the sum
                                                   have h_iter_bound : iterate_ceil n (4 * r) > n := by
-                                                    -- f(k) = iterate_ceil n k, f(0) = 1
-                                                    -- f(k+1) = f(k) + ceil(f(k)^2/n)
-                                                    -- When f ≥ m*r (m≥1), step ≥ m²+1 (by step_lower)
-                                                    -- Layer 0: [1, r), ≤ r-1 steps
-                                                    -- Layer m: [m*r, (m+1)*r), ≤ r/(m²+1)+1 steps
-                                                    -- Total ≤ (r-1) + Σ(r/(m²+1)+1) < r + 2r + r = 4r
-                                                    -- So f(4r) > n
-                                                    -- Use gap_count on the list of iterate_ceil values
-                                                    -- Actually, use direct counting:
-                                                    -- f(4r) = 1 + Σ steps ≥ 1 + (layer contributions)
-                                                    -- If f(4r) ≤ n, total steps < 4r, contradiction
                                                     by_contra h_neg
                                                     push_neg at h_neg
-                                                    -- f(4r) ≤ n < r²
-                                                    -- Define helper: count steps in each layer
-                                                    have h_f_mono : ∀ k, iterate_ceil n k ≤ iterate_ceil n (k + 1) := by
-                                                      intro k
-                                                      show iterate_ceil n k ≤ iterate_ceil n k +
-                                                        (iterate_ceil n k * iterate_ceil n k + n - 1) / n
-                                                      omega
-                                                    -- f(k) ≥ 1 for all k
-                                                    have h_f_pos : ∀ k, 1 ≤ iterate_ceil n k := by
-                                                      intro k
-                                                      induction k with
-                                                      | zero => rfl
-                                                      | succ k ih =>
-                                                        have := h_f_mono k
-                                                        omega
-                                                    -- step ≥ 1 always (since f ≥ 1, f² ≥ 1, (1+n-1)/n = 1)
-                                                    have h_step1 : ∀ k, 1 ≤
-                                                        (iterate_ceil n k * iterate_ceil n k + n - 1) / n := by
-                                                      intro k
-                                                      have hf := h_f_pos k
-                                                      have hf2 : 1 ≤ iterate_ceil n k * iterate_ceil n k := by nlinarith
-                                                      have : n ≤ iterate_ceil n k * iterate_ceil n k + n - 1 := by nlinarith
-                                                      exact Nat.le_div_of_mul_le hn_pos (by omega)
-                                                    -- If f(k) ≥ m*r, step ≥ m²+1 (by step_lower)
-                                                    -- Key: count total steps to reach f > n
-                                                    -- f starts at 1, each step increases f by ≥ step(f)
-                                                    -- In layer 0 (f < r): step ≥ 1, ≤ r-1 steps to leave layer 0
-                                                    -- In layer m (m≥1, m*r ≤ f < (m+1)*r): step ≥ m²+1
-                                                    --   ≤ ceil(r/(m²+1)) ≤ r/(m²+1)+1 steps to leave layer m
-                                                    -- Total ≤ (r-1) + Σ_{m=1}^{r-1} (r/(m²+1)+1)
-                                                    -- < r + r*Σ(1/m²) + r < r + 2r + r = 4r
-                                                    -- Contradiction with 4r steps and f(4r) ≤ n
-                                                    -- Use sum_inv_sq_lt_two: Σ 1/j² < 2
-                                                    have h_sum : (Finset.sum ((Finset.range r).filter (fun j => 1 ≤ j))
-                                                      (fun j => (1 : ℝ) / ((j + 1 : ℕ) : ℝ) ^ 2)) < 2 :=
-                                                      sum_inv_sq_lt_two r (by omega)
-                                                    -- The total "extra" steps beyond layer 0
-                                                    -- ≤ Σ_{m=1}^{r-1} (r/(m²+1) + 1) ≤ r * Σ 1/m² + r
-                                                    -- < 2r + r = 3r
-                                                    -- Total steps ≤ (r-1) + 3r < 4r
-                                                    -- So f(4r) > n
-                                                    -- Formalize with gap_count on [f(0), f(1), ..., f(4r)]
-                                                    sorry
+                                                    -- f(4r) ≤ n, f(0) = 1
+                                                    -- Layer m: [m*r, (m+1)*r), step ≥ m²+1 (m≥1), step ≥ 1 (m=0)
+                                                    -- Layer 0: ≤ r-1 steps
+                                                    -- Layer m≥1: ≤ ⌈r/(m²+1)⌉ ≤ r/(m²+1)+1 steps
+                                                    -- Total ≤ (r-1) + Σ(r/(m²+1)+1) < (r-1) + 2r + (r-1) = 4r-2 < 4r
+                                                    -- Contradiction: 4r steps not enough → f(4r) > n
+                                                    -- Use strong induction on remaining distance n+1-f
+                                                    have h_main : ∀ (f : ℕ), 1 ≤ f → f ≤ n + 1 →
+                                                        iterate_ceil_from n f (4 * r) > n := by
+                                                      intro f hf1 hfn
+                                                      have hkey : ∀ (m : ℕ), 0 < m → m * r ≤ f → f ≤ n →
+                                                          ∃ k, k ≤ r / (m * m + 1) + 1 ∧
+                                                          (iterate_ceil_from n f k ≥ (m + 1) * r ∨
+                                                           iterate_ceil_from n f k > n) := by
+                                                        intro m hm hmf hfn2
+                                                        use r / (m * m + 1) + 1
+                                                        refine ⟨le_rfl, ?_⟩
+                                                        have h_step : ∀ j, iterate_ceil_from n f j ≥ f →
+                                                            (m * m + 1) ≤
+                                                            (iterate_ceil_from n f j * iterate_ceil_from n f j + n - 1) / n := by
+                                                          intro j hj
+                                                          exact step_lower (iterate_ceil_from n f j) m hm hmf ▸ hj
+                                                        sorry
+                                                      sorry
+                                                    have h_contra := h_main 1 (by omega) (by omega)
+                                                    rw [show iterate_ceil_from n 1 (4 * r) = iterate_ceil n (4 * r) from by
+                                                      rw [← iterate_ceil_add n 0 (4 * r)]
+                                                      simp [iterate_ceil]] at h_contra
+                                                    exact absurd h_contra h_neg
                                                   by_contra h_neg
                                                   push_neg at h_neg
                                                   have h_eq : 4 * Nat.sqrt n + 4 = 4 * r := by
