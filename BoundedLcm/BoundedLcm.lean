@@ -1962,11 +1962,94 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
                                                           have : k1 + 1 + k2 = k1 + k2 + 1 := by omega
                                                           simp [iterate_ceil_from, this, ih]
                                                       -- Layered proof: iterate_ceil n (4r) > n
-                                                      -- Layer 0: r steps, f ≥ 1+r > r
-                                                      -- Layer m≥1: cross(m) = r/(m²+1)+1 steps, f ≥ (m+1)*r
-                                                      -- Total: r + Σ cross(m) < 4r (by h_sq_sum)
-                                                      -- Use strong induction on layers
-                                                      sorry
+                                                      have h_layer0 : iterate_ceil n r ≥ 1 + r := by
+                                                        have h1 := h_layer0_step r
+                                                        rw [show iterate_ceil n r = iterate_ceil_from n 1 r from by
+                                                          rw [← iterate_ceil_add n 0 r]; rfl]
+                                                        exact h1
+                                                      -- cross(m) = r/(m²+1)+1
+                                                      -- from m*r, cross(m) steps → f ≥ (m+1)*r + (m²+1)
+                                                      have h_cross : ∀ (m : ℕ), 1 ≤ m →
+                                                          iterate_ceil_from n (m * r) (r / (m * m + 1) + 1) ≥
+                                                          (m + 1) * r + (m * m + 1) := by
+                                                        intro m hm
+                                                        have h_k := h_step_in_layer (m * r) m (r / (m * m + 1) + 1) hm (le_refl _)
+                                                        have h_prod : (r / (m * m + 1) + 1) * (m * m + 1) ≥ r + (m * m + 1) := by
+                                                          have : r / (m * m + 1) * (m * m + 1) + (m * m + 1) ≥
+                                                              r / (m * m + 1) * (m * m + 1) + (m * m + 1) := le_refl _
+                                                          have h_floor : r / (m * m + 1) * (m * m + 1) ≤ r :=
+                                                            Nat.mul_div_le _ (m * m + 1)
+                                                          have h_total : r / (m * m + 1) * (m * m + 1) + (m * m + 1) ≥
+                                                              r / (m * m + 1) * (m * m + 1) + 1 * (m * m + 1) := by
+                                                            nlinarith
+                                                          nlinarith [h_floor]
+                                                        nlinarith [h_k, h_prod]
+                                                      -- Strong induction: from m*r, total cross steps to exceed n
+                                                      have h_layer_ind : ∀ (m : ℕ), 1 ≤ m → m ≤ r →
+                                                          iterate_ceil_from n (m * r)
+                                                            (Nat.rec 0 (fun j acc => r / (j * j + 1) + 1 + acc) (r - m)) > n ∨
+                                                          m * r > n := by
+                                                        intro m hm hmr
+                                                        induction r - m using Nat.strong_induction_on with
+                                                        | ind d hd =>
+                                                          by_cases hmr0 : m ≥ r
+                                                          · right; omega [hmr0, hr_sq]
+                                                          · left
+                                                            have hm_lt : m < r := by omega
+                                                            have h_cross_m := h_cross m hm
+                                                            set c := r / (m * m + 1) + 1
+                                                            -- f ≥ (m+1)*r + (m²+1) > (m+1)*r
+                                                            have h_f_next : iterate_ceil_from n (m * r) c ≥
+                                                                (m + 1) * r + (m * m + 1) := h_cross_m
+                                                            by_cases h_m1 : (m + 1) * r > n
+                                                            · -- f ≥ (m+1)*r > n
+                                                              have h_ge : iterate_ceil_from n (m * r) c > n := by
+                                                                nlinarith [h_f_next]
+                                                              -- Need: total steps = c + 0 = c, and f > n
+                                                              have h_rec : Nat.rec 0 (fun j acc => r / (j * j + 1) + 1 + acc) (r - m) =
+                                                                  c + Nat.rec 0 (fun j acc => r / (j * j + 1) + 1 + acc) (r - (m + 1)) := by
+                                                                have h_eq : r - m = (r - (m + 1)) + 1 := by omega
+                                                                rw [h_eq, Nat.rec_succ]
+                                                              rw [h_rec]
+                                                              have h_split := h_iter_from_add n (m * r) c
+                                                                (Nat.rec 0 (fun j acc => r / (j * j + 1) + 1 + acc) (r - (m + 1)))
+                                                              rw [h_split]
+                                                              exact h_mono _ _ _ h_f_next (Nat.rec 0 (fun j acc => r / (j * j + 1) + 1 + acc) (r - (m + 1))) ▸ h_ge
+                                                            · -- (m+1)*r ≤ n, use induction
+                                                              have h_m1_le : m + 1 ≤ r := by omega
+                                                              have h_d' : r - (m + 1) < r - m := by omega
+                                                              have h_ih := hd (r - (m + 1)) h_d' (m + 1) hm h_m1_le
+                                                              rcases h_ih with h_iter | h_gt
+                                                              · -- iterate_ceil_from n ((m+1)*r) rest > n
+                                                                have h_rec : Nat.rec 0 (fun j acc => r / (j * j + 1) + 1 + acc) (r - m) =
+                                                                    c + Nat.rec 0 (fun j acc => r / (j * j + 1) + 1 + acc) (r - (m + 1)) := by
+                                                                  have h_eq : r - m = (r - (m + 1)) + 1 := by omega
+                                                                  rw [h_eq, Nat.rec_succ]
+                                                                rw [h_rec]
+                                                                have h_split := h_iter_from_add n (m * r) c
+                                                                  (Nat.rec 0 (fun j acc => r / (j * j + 1) + 1 + acc) (r - (m + 1)))
+                                                                rw [h_split]
+                                                                exact h_mono _ _ _ h_f_next _ h_iter
+                                                              · -- (m+1)*r > n
+                                                                omega
+                                                      -- Apply: from 1*r = r, total steps < 4r
+                                                      have h_ind := h_layer_ind 1 (by omega) (by omega)
+                                                      -- Total steps = Nat.rec ... (r - 1) = Σ_{j=1}^{r-1} cross(j)
+                                                      -- Need: this sum < 3r
+                                                      -- For now, use native_decide to verify sum < 3r for n > 1200
+                                                      have h_sum_lt : Nat.rec 0 (fun j acc => r / (j * j + 1) + 1 + acc) (r - 1) < 3 * r := by
+                                                        sorry
+                                                      rcases h_ind with h_iter | h_gt
+                                                      · -- iterate_ceil_from n r sum > n
+                                                        -- iterate_ceil n (r + sum) = iterate_ceil_from n (iter n r) sum ≥ iter_from n r sum > n
+                                                        have h_total : r + Nat.rec 0 (fun j acc => r / (j * j + 1) + 1 + acc) (r - 1) ≤ 4 * r := by omega [h_sum_lt]
+                                                        have h_iter_r_ge : iterate_ceil n r ≥ r := by omega [h_layer0]
+                                                        have h_split := iterate_ceil_add n r (Nat.rec 0 (fun j acc => r / (j * j + 1) + 1 + acc) (r - 1))
+                                                        rw [h_split]
+                                                        have h_mono_iter := h_mono r (iterate_ceil n r) _ h_iter_r_ge _
+                                                        exact h_mono_iter ▸ h_iter
+                                                      · -- r > n
+                                                        omega
                                                   by_contra h_neg
                                                   push_neg at h_neg
                                                   have h_eq : 4 * Nat.sqrt n + 4 = 4 * r := by
