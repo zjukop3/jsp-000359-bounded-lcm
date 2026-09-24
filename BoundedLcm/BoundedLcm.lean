@@ -1934,9 +1934,38 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
                                                         rw [show iterate_ceil n r = iterate_ceil_from n 1 r from by
                                                           rw [← iterate_ceil_add n 0 r]; rfl]
                                                         exact h_f_r
-                                                      omega [hr_ge_n]
-                                                    · -- r < n: need layered proof
-                                                      -- Use strong induction on remaining distance
+                                                       omega [hr_ge_n]
+                                                    · -- r < n: layered induction
+                                                      have h_mono : ∀ (f1 f2 k : ℕ), f1 ≤ f2 →
+                                                          iterate_ceil_from n f1 k ≤ iterate_ceil_from n f2 k := by
+                                                        intro f1 f2 k h12
+                                                        induction k with
+                                                        | zero => exact h12
+                                                        | succ k ih =>
+                                                          simp [iterate_ceil_from]
+                                                          have h_s1 : (f1 * f1 + n - 1) / n ≤ (f2 * f2 + n - 1) / n := by
+                                                            have h_sq : f1 * f1 ≤ f2 * f2 := Nat.mul_le_mul h12 h12
+                                                            have h_add : f1 * f1 + n - 1 ≤ f2 * f2 + n - 1 := by nlinarith
+                                                            exact Nat.div_le_div_right h_add
+                                                          nlinarith [ih, h_s1]
+                                                      have h_iter_mono : ∀ (k : ℕ), iterate_ceil n k ≤ iterate_ceil n (k + 1) := by
+                                                        intro k
+                                                        show iterate_ceil n k ≤ iterate_ceil n k + (iterate_ceil n k * iterate_ceil n k + n - 1) / n
+                                                        omega
+                                                      have h_iter_from_add : ∀ (f k1 k2 : ℕ),
+                                                          iterate_ceil_from n f (k1 + k2) =
+                                                          iterate_ceil_from n (iterate_ceil_from n f k1) k2 := by
+                                                        intro f k1
+                                                        induction k1 with
+                                                        | zero => simp [iterate_ceil_from, Nat.zero_add]
+                                                        | succ k1 ih =>
+                                                          have : k1 + 1 + k2 = k1 + k2 + 1 := by omega
+                                                          simp [iterate_ceil_from, this, ih]
+                                                      -- Layered proof: iterate_ceil n (4r) > n
+                                                      -- Layer 0: r steps, f ≥ 1+r > r
+                                                      -- Layer m≥1: cross(m) = r/(m²+1)+1 steps, f ≥ (m+1)*r
+                                                      -- Total: r + Σ cross(m) < 4r (by h_sq_sum)
+                                                      -- Use strong induction on layers
                                                       sorry
                                                   by_contra h_neg
                                                   push_neg at h_neg
