@@ -1552,518 +1552,230 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
                         interval_cases n <;> native_decide
                       have h_al := h_ceil_partition 107 h_sum
                       exact le_trans (by exact_mod_cast h_al) h_tm
-                    · -- n >= 675: use iterate_ceil + native_decide
+                    · -- n >= 675: unified mathematical proof
                       set r := Nat.sqrt n + 1 with hr_def
                       have hr_sq : n < r * r := by
                         rw [hr_def]; exact Nat.lt_succ_sqrt n
+                      have hr_pos : 0 < r := Nat.succ_pos _
+                      have hn_pos : 0 < n := by omega
                       have h_4r : (4 * r : ℝ) ≤ 4 * Real.sqrt n + 4 := by
                         have h_nat : (Nat.sqrt n : ℝ) ≤ Real.sqrt n := h_sqrt_ge_nat
                         rw [hr_def]; push_cast; linarith
-                      by_cases hn700 : n ≤ 700
-                      · -- n ∈ [675, 700]: verify with interval_cases + native_decide
-                        interval_cases n <;> {
-                          have h_iter_gt : iterate_ceil n (4 * Nat.sqrt n + 4) > n := by native_decide
-                          by_contra h_neg
-                          push_neg at h_neg
-                          have h_idx : 4 * Nat.sqrt n + 4 < a.length := by
-                            have : (4 * Nat.sqrt n + 4 : ℝ) < (a.length : ℝ) := by linarith
-                            exact_mod_cast this
-                          have h_iter := h_iter_lower (4 * Nat.sqrt n + 4) h_idx
-                          have h_le : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ≤ n := by
-                            have hmem : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ∈ a := by simp [List.getElem_mem]
-                            exact ha_le _ hmem
-                          linarith [h_iter, h_iter_gt, h_le]
-                        }
-                      · -- n > 700
-                        by_cases hn725 : n ≤ 725
-                        · -- n ∈ [701, 725]
-                          interval_cases n <;> {
-                            have h_iter_gt : iterate_ceil n (4 * Nat.sqrt n + 4) > n := by native_decide
-                            by_contra h_neg
-                            push_neg at h_neg
-                            have h_idx : 4 * Nat.sqrt n + 4 < a.length := by
-                              have : (4 * Nat.sqrt n + 4 : ℝ) < (a.length : ℝ) := by linarith
-                              exact_mod_cast this
-                            have h_iter := h_iter_lower (4 * Nat.sqrt n + 4) h_idx
-                            have h_le : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ≤ n := by
-                              have hmem : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ∈ a := by simp [List.getElem_mem]
-                              exact ha_le _ hmem
-                            linarith [h_iter, h_iter_gt, h_le]
-                          }
-                        · -- n > 725
-                          by_cases hn750 : n ≤ 750
-                          · -- n ∈ [726, 750]
-                            interval_cases n <;> {
-                              have h_iter_gt : iterate_ceil n (4 * Nat.sqrt n + 4) > n := by native_decide
-                              by_contra h_neg
-                              push_neg at h_neg
-                              have h_idx : 4 * Nat.sqrt n + 4 < a.length := by
-                                have : (4 * Nat.sqrt n + 4 : ℝ) < (a.length : ℝ) := by linarith
-                                exact_mod_cast this
-                              have h_iter := h_iter_lower (4 * Nat.sqrt n + 4) h_idx
-                              have h_le : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ≤ n := by
-                                have hmem : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ∈ a := by simp [List.getElem_mem]
-                                exact ha_le _ hmem
-                              linarith [h_iter, h_iter_gt, h_le]
-                            }
-                          · -- n > 750
-                            by_cases hn775 : n ≤ 775
-                            · -- n ∈ [751, 775]
-                              interval_cases n <;> {
-                                have h_iter_gt : iterate_ceil n (4 * Nat.sqrt n + 4) > n := by native_decide
-                                by_contra h_neg
-                                push_neg at h_neg
-                                have h_idx : 4 * Nat.sqrt n + 4 < a.length := by
-                                  have : (4 * Nat.sqrt n + 4 : ℝ) < (a.length : ℝ) := by linarith
-                                  exact_mod_cast this
-                                have h_iter := h_iter_lower (4 * Nat.sqrt n + 4) h_idx
-                                have h_le : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ≤ n := by
-                                  have hmem : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ∈ a := by simp [List.getElem_mem]
-                                  exact ha_le _ hmem
-                                linarith [h_iter, h_iter_gt, h_le]
-                              }
-                            · -- n > 775
-                              by_cases hn800 : n ≤ 800
-                              · -- n ∈ [776, 800]
-                                interval_cases n <;> {
-                                  have h_iter_gt : iterate_ceil n (4 * Nat.sqrt n + 4) > n := by native_decide
-                                  by_contra h_neg
-                                  push_neg at h_neg
-                                  have h_idx : 4 * Nat.sqrt n + 4 < a.length := by
-                                    have : (4 * Nat.sqrt n + 4 : ℝ) < (a.length : ℝ) := by linarith
-                                    exact_mod_cast this
-                                  have h_iter := h_iter_lower (4 * Nat.sqrt n + 4) h_idx
-                                  have h_le : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ≤ n := by
-                                    have hmem : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ∈ a := by simp [List.getElem_mem]
-                                    exact ha_le _ hmem
-                                  linarith [h_iter, h_iter_gt, h_le]
-                                }
-                              · -- n > 800
-                                by_cases hn825 : n ≤ 825
-                                · -- n ∈ [801, 825]
-                                  interval_cases n <;> {
-                                    have h_iter_gt : iterate_ceil n (4 * Nat.sqrt n + 4) > n := by native_decide
-                                    by_contra h_neg
-                                    push_neg at h_neg
-                                    have h_idx : 4 * Nat.sqrt n + 4 < a.length := by
-                                      have : (4 * Nat.sqrt n + 4 : ℝ) < (a.length : ℝ) := by linarith
-                                      exact_mod_cast this
-                                    have h_iter := h_iter_lower (4 * Nat.sqrt n + 4) h_idx
-                                    have h_le : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ≤ n := by
-                                      have hmem : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ∈ a := by simp [List.getElem_mem]
-                                      exact ha_le _ hmem
-                                    linarith [h_iter, h_iter_gt, h_le]
-                                  }
-                                · -- n > 825
-                                  by_cases hn850 : n ≤ 850
-                                  · -- n ∈ [826, 850]
-                                    interval_cases n <;> {
-                                      have h_iter_gt : iterate_ceil n (4 * Nat.sqrt n + 4) > n := by native_decide
-                                      by_contra h_neg
-                                      push_neg at h_neg
-                                      have h_idx : 4 * Nat.sqrt n + 4 < a.length := by
-                                        have : (4 * Nat.sqrt n + 4 : ℝ) < (a.length : ℝ) := by linarith
-                                        exact_mod_cast this
-                                      have h_iter := h_iter_lower (4 * Nat.sqrt n + 4) h_idx
-                                      have h_le : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ≤ n := by
-                                        have hmem : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ∈ a := by simp [List.getElem_mem]
-                                        exact ha_le _ hmem
-                                      linarith [h_iter, h_iter_gt, h_le]
-                                    }
-                                  · -- n > 850
-                                    by_cases hn900 : n ≤ 900
-                                    · -- n ∈ [851, 900]
-                                      interval_cases n <;> {
-                                        have h_iter_gt : iterate_ceil n (4 * Nat.sqrt n + 4) > n := by native_decide
-                                        by_contra h_neg
-                                        push_neg at h_neg
-                                        have h_idx : 4 * Nat.sqrt n + 4 < a.length := by
-                                          have : (4 * Nat.sqrt n + 4 : ℝ) < (a.length : ℝ) := by linarith
-                                          exact_mod_cast this
-                                        have h_iter := h_iter_lower (4 * Nat.sqrt n + 4) h_idx
-                                        have h_le : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ≤ n := by
-                                          have hmem : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ∈ a := by simp [List.getElem_mem]
-                                          exact ha_le _ hmem
-                                        linarith [h_iter, h_iter_gt, h_le]
-                                      }
-                                    · -- n > 900
-                                      by_cases hn950 : n ≤ 950
-                                      · -- n ∈ [901, 950]
-                                        interval_cases n <;> {
-                                          have h_iter_gt : iterate_ceil n (4 * Nat.sqrt n + 4) > n := by native_decide
-                                          by_contra h_neg
-                                          push_neg at h_neg
-                                          have h_idx : 4 * Nat.sqrt n + 4 < a.length := by
-                                            have : (4 * Nat.sqrt n + 4 : ℝ) < (a.length : ℝ) := by linarith
-                                            exact_mod_cast this
-                                          have h_iter := h_iter_lower (4 * Nat.sqrt n + 4) h_idx
-                                          have h_le : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ≤ n := by
-                                            have hmem : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ∈ a := by simp [List.getElem_mem]
-                                            exact ha_le _ hmem
-                                          linarith [h_iter, h_iter_gt, h_le]
-                                        }
-                                      · -- n > 950
-                                        by_cases hn1000 : n ≤ 1000
-                                        · -- n ∈ [951, 1000]
-                                          interval_cases n <;> {
-                                            have h_iter_gt : iterate_ceil n (4 * Nat.sqrt n + 4) > n := by native_decide
-                                            by_contra h_neg
-                                            push_neg at h_neg
-                                            have h_idx : 4 * Nat.sqrt n + 4 < a.length := by
-                                              have : (4 * Nat.sqrt n + 4 : ℝ) < (a.length : ℝ) := by linarith
-                                              exact_mod_cast this
-                                            have h_iter := h_iter_lower (4 * Nat.sqrt n + 4) h_idx
-                                            have h_le : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ≤ n := by
-                                              have hmem : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ∈ a := by simp [List.getElem_mem]
-                                              exact ha_le _ hmem
-                                            linarith [h_iter, h_iter_gt, h_le]
-                                          }
-                                        · -- n > 1000
-                                          by_cases hn1050 : n ≤ 1050
-                                          · -- n ∈ [1001, 1050]
-                                            interval_cases n <;> {
-                                              have h_iter_gt : iterate_ceil n (4 * Nat.sqrt n + 4) > n := by native_decide
-                                              by_contra h_neg
-                                              push_neg at h_neg
-                                              have h_idx : 4 * Nat.sqrt n + 4 < a.length := by
-                                                have : (4 * Nat.sqrt n + 4 : ℝ) < (a.length : ℝ) := by linarith
-                                                exact_mod_cast this
-                                              have h_iter := h_iter_lower (4 * Nat.sqrt n + 4) h_idx
-                                              have h_le : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ≤ n := by
-                                                have hmem : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ∈ a := by simp [List.getElem_mem]
-                                                exact ha_le _ hmem
-                                              linarith [h_iter, h_iter_gt, h_le]
-                                            }
-                                          · -- n > 1050
-                                            by_cases hn1100 : n ≤ 1100
-                                            · -- n ∈ [1051, 1100]
-                                              interval_cases n <;> {
-                                                have h_iter_gt : iterate_ceil n (4 * Nat.sqrt n + 4) > n := by native_decide
-                                                by_contra h_neg
-                                                push_neg at h_neg
-                                                have h_idx : 4 * Nat.sqrt n + 4 < a.length := by
-                                                  have : (4 * Nat.sqrt n + 4 : ℝ) < (a.length : ℝ) := by linarith
-                                                  exact_mod_cast this
-                                                have h_iter := h_iter_lower (4 * Nat.sqrt n + 4) h_idx
-                                                have h_le : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ≤ n := by
-                                                  have hmem : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ∈ a := by simp [List.getElem_mem]
-                                                  exact ha_le _ hmem
-                                                linarith [h_iter, h_iter_gt, h_le]
-                                              }
-                                            · -- n > 1100
-                                              by_cases hn1150 : n ≤ 1150
-                                              · -- n ∈ [1101, 1150]
-                                                interval_cases n <;> {
-                                                  have h_iter_gt : iterate_ceil n (4 * Nat.sqrt n + 4) > n := by native_decide
-                                                  by_contra h_neg
-                                                  push_neg at h_neg
-                                                  have h_idx : 4 * Nat.sqrt n + 4 < a.length := by
-                                                    have : (4 * Nat.sqrt n + 4 : ℝ) < (a.length : ℝ) := by linarith
-                                                    exact_mod_cast this
-                                                  have h_iter := h_iter_lower (4 * Nat.sqrt n + 4) h_idx
-                                                  have h_le : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ≤ n := by
-                                                    have hmem : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ∈ a := by simp [List.getElem_mem]
-                                                    exact ha_le _ hmem
-                                                  linarith [h_iter, h_iter_gt, h_le]
-                                                }
-                                              · -- n > 1150
-                                                by_cases hn1200 : n ≤ 1200
-                                                · -- n ∈ [1151, 1200]
-                                                  interval_cases n <;> {
-                                                    have h_iter_gt : iterate_ceil n (4 * Nat.sqrt n + 4) > n := by native_decide
-                                                    by_contra h_neg
-                                                    push_neg at h_neg
-                                                    have h_idx : 4 * Nat.sqrt n + 4 < a.length := by
-                                                      have : (4 * Nat.sqrt n + 4 : ℝ) < (a.length : ℝ) := by linarith
-                                                      exact_mod_cast this
-                                                    have h_iter := h_iter_lower (4 * Nat.sqrt n + 4) h_idx
-                                                    have h_le : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ≤ n := by
-                                                      have hmem : a.get ⟨4 * Nat.sqrt n + 4, h_idx⟩ ∈ a := by simp [List.getElem_mem]
-                                                      exact ha_le _ hmem
-                                                    linarith [h_iter, h_iter_gt, h_le]
-                                                  }
-                                                · -- n > 1200: mathematical proof
-                                                  set r := Nat.sqrt n + 1 with hr_def
-                                                  have hr_sq : n < r * r := by
-                                                    rw [hr_def]; exact Nat.lt_succ_sqrt n
-                                                  have hr_pos : 0 < r := Nat.succ_pos _
-                                                  have hn_pos : 0 < n := by omega
-                                                  have h_4r : (4 * r : ℝ) ≤ 4 * Real.sqrt n + 4 := by
-                                                    have h_nat : (Nat.sqrt n : ℝ) ≤ Real.sqrt n := h_sqrt_ge_nat
-                                                    rw [hr_def]; push_cast; linarith
-                                                  have h_r_le_n : r ≤ n := by omega [hr_sq]
-                                                  -- step_lower: f ≥ m*r → ceil(f²/n) ≥ m²+1
-                                                  have step_lower : ∀ (f m : ℕ), 1 ≤ m → m * r ≤ f →
-                                                      m * m + 1 ≤ (f * f + n - 1) / n := by
-                                                    intros f m hm hfm
-                                                    have hf2 : f * f ≥ m * m * (r * r) := by nlinarith
-                                                    have hr2 : r * r ≥ n + 1 := by omega [hr_sq]
-                                                    have hf2' : f * f ≥ m * m * (n + 1) := by nlinarith
-                                                    have hf2'' : f * f + n - 1 ≥ (m * m + 1) * n + (m * m - 1) := by nlinarith
-                                                    have h_div : ((m * m + 1) * n + (m * m - 1)) / n ≥ m * m + 1 := by
-                                                      have h_c : (m * m + 1) * n + (m * m - 1) ≥ (m * m + 1) * n := by nlinarith
-                                                      have h_d : ((m * m + 1) * n) / n = m * m + 1 :=
-                                                        Nat.mul_div_cancel_left _ hn_pos
-                                                      have h_e : ((m * m + 1) * n) / n ≤
-                                                          ((m * m + 1) * n + (m * m - 1)) / n :=
-                                                        Nat.div_le_div_right h_c
-                                                      omega [h_d, h_e]
-                                                    exact h_div
-                                                  -- gap_count applied: a.length ≤ 4r
-                                                  -- Use h_iter_lower + iterate_ceil bound
-                                                  -- For k = 4r, iterate_ceil(n, 4r) > n
-                                                  -- Proof: f grows at least 1 per step in layer 0 (≤ r steps),
-                                                  --   then ≥ m²+1 per step in layer m (≤ r/(m²+1)+1 steps per layer),
-                                                  --   total ≤ r + Σ(r/(m²+1)+1) < r + 2r + r = 4r
-                                                  -- Use sum_inv_sq_lt_two for the sum
-                                                  have h_iter_bound : iterate_ceil n (4 * r) > n := by
-                                                    -- step_in_layer: f ≥ m*r → f_k ≥ f + k*(m²+1)
-                                                    have h_step_in_layer : ∀ (f m k : ℕ), 1 ≤ m → m * r ≤ f →
-                                                        iterate_ceil_from n f k ≥ f + k * (m * m + 1) := by
-                                                      intro f m k hm hfm
-                                                      induction k with
-                                                      | zero => simp [iterate_ceil_from]
-                                                      | succ k ih =>
-                                                        simp [iterate_ceil_from, Nat.add_succ]
-                                                        have h_fk : iterate_ceil_from n f k ≥ m * r := by
-                                                          nlinarith [hfm, ih]
-                                                        have h_step := step_lower (iterate_ceil_from n f k) m hm h_fk
-                                                        nlinarith [ih, h_step]
-                                                    -- layer 0: step ≥ 1, f(k) ≥ 1 + k
-                                                    have h_layer0_step : ∀ (k : ℕ),
-                                                        iterate_ceil_from n 1 k ≥ 1 + k := by
-                                                      intro k
-                                                      induction k with
-                                                      | zero => simp [iterate_ceil_from]
-                                                      | succ k ih =>
-                                                        simp [iterate_ceil_from, Nat.add_succ]
-                                                        have hf : 1 ≤ iterate_ceil_from n 1 k := by nlinarith
-                                                        have h_step : 1 ≤
-                                                            (iterate_ceil_from n 1 k * iterate_ceil_from n 1 k + n - 1) / n := by
-                                                          have : n ≤ iterate_ceil_from n 1 k * iterate_ceil_from n 1 k + n - 1 := by nlinarith
-                                                          exact Nat.le_div_of_mul_le hn_pos (by omega)
-                                                        nlinarith [ih, h_step]
-                                                    -- Σ 1/m² ≤ 2 - 1/r (from telescope)
-                                                    have h_sq_sum : (Finset.sum (Finset.Icc 1 (r-1))
-                                                        (fun m => (1 : ℝ) / ((m : ℕ) : ℝ) ^ 2)) ≤ 2 - 1 / (r : ℝ) := by
-                                                      by_cases hr1 : r ≤ 1
-                                                      · omega [hr_def]  -- r ≥ 2 for n > 1200
-                                                      have hr2 : 2 ≤ r := by omega
-                                                      have h_telescope := sum_inv_sq_telescope hr2
-                                                      -- telescope gives Σ_{j=1}^{r-1} 1/(j+1)² ≤ 1 - 1/r
-                                                      -- = Σ_{m=2}^{r} 1/m² ≤ 1 - 1/r
-                                                      -- So Σ_{m=1}^{r-1} 1/m² = 1 + Σ_{m=2}^{r-1} 1/m² ≤ 1 + (1 - 1/r) = 2 - 1/r
-                                                      have h_eq : Finset.sum (Finset.Icc 1 (r-1))
-                                                          (fun m => (1 : ℝ) / ((m : ℕ) : ℝ) ^ 2) =
-                                                          1 + Finset.sum (Finset.Icc 2 (r-1))
-                                                          (fun m => (1 : ℝ) / ((m : ℕ) : ℝ) ^ 2) := by
-                                                        by_cases hr2_eq : r = 2
-                                                        · subst hr2_eq; simp [Finset.Icc]
-                                                        have hr3 : 3 ≤ r := by omega
-                                                        have h_split : Finset.Icc 1 (r-1) =
-                                                            Finset.Icc 1 1 ∪ Finset.Icc 2 (r-1) := by
-                                                          ext x
-                                                          constructor
-                                                          · intro hx
-                                                            simp only [Finset.mem_Icc] at hx
-                                                            by_cases hx1 : x = 1
-                                                            · left; simp [hx1]
-                                                            · right; simp [hx, hx1]
-                                                          · intro hx
-                                                            rcases hx with h | h
-                                                            · simp_all [Finset.mem_Icc]
-                                                            · simp_all [Finset.mem_Icc]
-                                                        rw [h_split, Finset.sum_union]
-                                                        · simp [Finset.Icc]
-                                                        · exact Finset.disjoint_Icc_Icc (by omega)
-                                                      rw [h_eq]
-                                                      have h_2_sum : Finset.sum (Finset.Icc 2 (r-1))
-                                                          (fun m => (1 : ℝ) / ((m : ℕ) : ℝ) ^ 2) ≤ 1 - 1 / (r : ℝ) := by
-                                                        by_cases hr2_eq : r = 2
-                                                        · subst hr2_eq; simp [Finset.Icc]
-                                                        -- Icc 2 (r-1) ⊆ Ioc 1 r (shifted)
-                                                        have h_sub : Finset.Icc 2 (r-1) ⊆
-                                                            (Finset.range r).filter (fun j => 1 ≤ j) := by
-                                                          intro x hx
-                                                          simp only [Finset.mem_Icc] at hx
-                                                          simp only [Finset.mem_filter, Finset.mem_range]
-                                                          exact ⟨by omega, by omega⟩
-                                                        have h := h_telescope
-                                                        simp only [Finset.mem_filter, Finset.mem_range] at h
-                                                        -- Convert: telescope sum = Σ_{j=1}^{r-1} 1/(j+1)² = Σ_{m=2}^{r} 1/m²
-                                                        -- Icc 2 (r-1) ⊆ {2, ..., r} ⊆ {2, ..., r}
-                                                        -- So Σ_{m=2}^{r-1} 1/m² ≤ Σ_{m=2}^{r} 1/m² ≤ 1 - 1/r
-                                                        have h_sum_2_r : Finset.sum (Finset.Icc 2 r)
-                                                            (fun m => (1 : ℝ) / ((m : ℕ) : ℝ) ^ 2) ≤ 1 - 1 / (r : ℝ) := by
-                                                          have h_bij : Finset.sum (Finset.Icc 2 r)
-                                                              (fun m => (1 : ℝ) / ((m : ℕ) : ℝ) ^ 2) =
-                                                              Finset.sum ((Finset.range r).filter (fun j => 1 ≤ j))
-                                                              (fun j => (1 : ℝ) / ((j + 1 : ℕ) : ℝ) ^ 2) := by
-                                                            apply Finset.sum_bij (fun j _ => j + 1)
-                                                            · intro j hj
-                                                              simp only [Finset.mem_filter, Finset.mem_range] at hj
-                                                              simp only [Finset.mem_Icc]
-                                                              exact ⟨by omega, by omega⟩
-                                                            · intro j1 _ j2 _ hjj; omega
-                                                            · intro m hm
-                                                              simp only [Finset.mem_Icc] at hm
-                                                              use m - 1
-                                                              simp only [Finset.mem_filter, Finset.mem_range]
-                                                              refine ⟨by omega, by omega, ?_⟩
-                                                              omega
-                                                          rw [h_bij]
-                                                          exact h
-                                                        have h_2_r1 : Finset.Icc 2 (r-1) ⊆ Finset.Icc 2 r := by
-                                                          intro x hx
-                                                          simp only [Finset.mem_Icc] at hx
-                                                          simp only [Finset.mem_Icc]
-                                                          exact ⟨hx.1, by omega⟩
-                                                        exact le_trans (Finset.sum_le_sum_of_subset h_2_r1) h_sum_2_r
-                                                      linarith
-                                                    -- Total steps ≤ (r-1) + Σ(r/(m²+1)+1) < (r-1) + r*(2-1/r) + (r-1) = 4r-3 < 4r
-                                                    -- Use iterate_ceil_add + induction on layers
-                                                    -- For now: verify with native_decide for specific r ranges
-                                                    by_contra h_neg
-                                                    push_neg at h_neg
-                                                    -- f(4r) ≤ n, contradiction with layer counting
-                                                    -- Layer 0: r steps, f ≥ 1+r > r (unless r ≥ n)
-                                                    -- If r ≥ n: f(r) ≥ 1+r > n, contradiction
-                                                    by_cases hr_ge_n : r ≥ n
-                                                    · have h_f_r := h_layer0_step r
-                                                      have h_iter_r : iterate_ceil n r ≥ 1 + r := by
-                                                        rw [show iterate_ceil n r = iterate_ceil_from n 1 r from by
-                                                          rw [← iterate_ceil_add n 0 r]; rfl]
-                                                        exact h_f_r
-                                                       omega [hr_ge_n]
-                                                    · -- r < n: layered induction
-                                                      have h_mono : ∀ (f1 f2 k : ℕ), f1 ≤ f2 →
-                                                          iterate_ceil_from n f1 k ≤ iterate_ceil_from n f2 k := by
-                                                        intro f1 f2 k h12
-                                                        induction k with
-                                                        | zero => exact h12
-                                                        | succ k ih =>
-                                                          simp [iterate_ceil_from]
-                                                          have h_s1 : (f1 * f1 + n - 1) / n ≤ (f2 * f2 + n - 1) / n := by
-                                                            have h_sq : f1 * f1 ≤ f2 * f2 := Nat.mul_le_mul h12 h12
-                                                            have h_add : f1 * f1 + n - 1 ≤ f2 * f2 + n - 1 := by nlinarith
-                                                            exact Nat.div_le_div_right h_add
-                                                          nlinarith [ih, h_s1]
-                                                      have h_iter_mono : ∀ (k : ℕ), iterate_ceil n k ≤ iterate_ceil n (k + 1) := by
-                                                        intro k
-                                                        show iterate_ceil n k ≤ iterate_ceil n k + (iterate_ceil n k * iterate_ceil n k + n - 1) / n
-                                                        omega
-                                                      have h_iter_from_add : ∀ (f k1 k2 : ℕ),
-                                                          iterate_ceil_from n f (k1 + k2) =
-                                                          iterate_ceil_from n (iterate_ceil_from n f k1) k2 := by
-                                                        intro f k1
-                                                        induction k1 with
-                                                        | zero => simp [iterate_ceil_from, Nat.zero_add]
-                                                        | succ k1 ih =>
-                                                          have : k1 + 1 + k2 = k1 + k2 + 1 := by omega
-                                                          simp [iterate_ceil_from, this, ih]
-                                                      -- Layered proof: iterate_ceil n (4r) > n
-                                                      have h_layer0 : iterate_ceil n r ≥ 1 + r := by
-                                                        have h1 := h_layer0_step r
-                                                        rw [show iterate_ceil n r = iterate_ceil_from n 1 r from by
-                                                          rw [← iterate_ceil_add n 0 r]; rfl]
-                                                        exact h1
-                                                      -- cross(m) = r/(m²+1)+1
-                                                      -- from m*r, cross(m) steps → f ≥ (m+1)*r + (m²+1)
-                                                      have h_cross : ∀ (m : ℕ), 1 ≤ m →
-                                                          iterate_ceil_from n (m * r) (r / (m * m + 1) + 1) ≥
-                                                          (m + 1) * r + (m * m + 1) := by
-                                                        intro m hm
-                                                        have h_k := h_step_in_layer (m * r) m (r / (m * m + 1) + 1) hm (le_refl _)
-                                                        have h_prod : (r / (m * m + 1) + 1) * (m * m + 1) ≥ r + (m * m + 1) := by
-                                                          have : r / (m * m + 1) * (m * m + 1) + (m * m + 1) ≥
-                                                              r / (m * m + 1) * (m * m + 1) + (m * m + 1) := le_refl _
-                                                          have h_floor : r / (m * m + 1) * (m * m + 1) ≤ r :=
-                                                            Nat.mul_div_le _ (m * m + 1)
-                                                          have h_total : r / (m * m + 1) * (m * m + 1) + (m * m + 1) ≥
-                                                              r / (m * m + 1) * (m * m + 1) + 1 * (m * m + 1) := by
-                                                            nlinarith
-                                                          nlinarith [h_floor]
-                                                        nlinarith [h_k, h_prod]
-                                                      -- Strong induction: from m*r, total cross steps to exceed n
-                                                      have h_layer_ind : ∀ (m : ℕ), 1 ≤ m → m ≤ r →
-                                                          iterate_ceil_from n (m * r)
-                                                            (Nat.rec 0 (fun j acc => r / (j * j + 1) + 1 + acc) (r - m)) > n ∨
-                                                          m * r > n := by
-                                                        intro m hm hmr
-                                                        induction r - m using Nat.strong_induction_on with
-                                                        | ind d hd =>
-                                                          by_cases hmr0 : m ≥ r
-                                                          · right; omega [hmr0, hr_sq]
-                                                          · left
-                                                            have hm_lt : m < r := by omega
-                                                            have h_cross_m := h_cross m hm
-                                                            set c := r / (m * m + 1) + 1
-                                                            -- f ≥ (m+1)*r + (m²+1) > (m+1)*r
-                                                            have h_f_next : iterate_ceil_from n (m * r) c ≥
-                                                                (m + 1) * r + (m * m + 1) := h_cross_m
-                                                            by_cases h_m1 : (m + 1) * r > n
-                                                            · -- f ≥ (m+1)*r > n
-                                                              have h_ge : iterate_ceil_from n (m * r) c > n := by
-                                                                nlinarith [h_f_next]
-                                                              -- Need: total steps = c + 0 = c, and f > n
-                                                              have h_rec : Nat.rec 0 (fun j acc => r / (j * j + 1) + 1 + acc) (r - m) =
-                                                                  c + Nat.rec 0 (fun j acc => r / (j * j + 1) + 1 + acc) (r - (m + 1)) := by
-                                                                have h_eq : r - m = (r - (m + 1)) + 1 := by omega
-                                                                rw [h_eq, Nat.rec_succ]
-                                                              rw [h_rec]
-                                                              have h_split := h_iter_from_add n (m * r) c
-                                                                (Nat.rec 0 (fun j acc => r / (j * j + 1) + 1 + acc) (r - (m + 1)))
-                                                              rw [h_split]
-                                                              exact h_mono _ _ _ h_f_next (Nat.rec 0 (fun j acc => r / (j * j + 1) + 1 + acc) (r - (m + 1))) ▸ h_ge
-                                                            · -- (m+1)*r ≤ n, use induction
-                                                              have h_m1_le : m + 1 ≤ r := by omega
-                                                              have h_d' : r - (m + 1) < r - m := by omega
-                                                              have h_ih := hd (r - (m + 1)) h_d' (m + 1) hm h_m1_le
-                                                              rcases h_ih with h_iter | h_gt
-                                                              · -- iterate_ceil_from n ((m+1)*r) rest > n
-                                                                have h_rec : Nat.rec 0 (fun j acc => r / (j * j + 1) + 1 + acc) (r - m) =
-                                                                    c + Nat.rec 0 (fun j acc => r / (j * j + 1) + 1 + acc) (r - (m + 1)) := by
-                                                                  have h_eq : r - m = (r - (m + 1)) + 1 := by omega
-                                                                  rw [h_eq, Nat.rec_succ]
-                                                                rw [h_rec]
-                                                                have h_split := h_iter_from_add n (m * r) c
-                                                                  (Nat.rec 0 (fun j acc => r / (j * j + 1) + 1 + acc) (r - (m + 1)))
-                                                                rw [h_split]
-                                                                exact h_mono _ _ _ h_f_next _ h_iter
-                                                              · -- (m+1)*r > n
-                                                                omega
-                                                      -- Apply: from 1*r = r, total steps < 4r
-                                                      have h_ind := h_layer_ind 1 (by omega) (by omega)
-                                                      -- Total steps = Nat.rec ... (r - 1) = Σ_{j=1}^{r-1} cross(j)
-                                                      -- Need: this sum < 3r
-                                                      -- For now, use native_decide to verify sum < 3r for n > 1200
-                                                      have h_sum_lt : Nat.rec 0 (fun j acc => r / (j * j + 1) + 1 + acc) (r - 1) < 3 * r := by
-                                                        sorry
-                                                      rcases h_ind with h_iter | h_gt
-                                                      · -- iterate_ceil_from n r sum > n
-                                                        -- iterate_ceil n (r + sum) = iterate_ceil_from n (iter n r) sum ≥ iter_from n r sum > n
-                                                        have h_total : r + Nat.rec 0 (fun j acc => r / (j * j + 1) + 1 + acc) (r - 1) ≤ 4 * r := by omega [h_sum_lt]
-                                                        have h_iter_r_ge : iterate_ceil n r ≥ r := by omega [h_layer0]
-                                                        have h_split := iterate_ceil_add n r (Nat.rec 0 (fun j acc => r / (j * j + 1) + 1 + acc) (r - 1))
-                                                        rw [h_split]
-                                                        have h_mono_iter := h_mono r (iterate_ceil n r) _ h_iter_r_ge _
-                                                        exact h_mono_iter ▸ h_iter
-                                                      · -- r > n
-                                                        omega
-                                                  by_contra h_neg
-                                                  push_neg at h_neg
-                                                  have h_eq : 4 * Nat.sqrt n + 4 = 4 * r := by
-                                                    rw [hr_def]; omega
-                                                  have h_iter_gt := h_iter_bound
-                                                  rw [h_eq] at h_iter_gt
-                                                  have h_idx2 : 4 * Nat.sqrt n + 4 < a.length := by
-                                                    have : (4 * Nat.sqrt n + 4 : ℝ) < (a.length : ℝ) := by linarith
-                                                    exact_mod_cast this
-                                                  have h_iter := h_iter_lower (4 * Nat.sqrt n + 4) h_idx2
-                                                  have h_le : a.get ⟨4 * Nat.sqrt n + 4, h_idx2⟩ ≤ n := by
-                                                    have hmem : a.get ⟨4 * Nat.sqrt n + 4, h_idx2⟩ ∈ a := by simp [List.getElem_mem]
-                                                    exact ha_le _ hmem
-                                                  linarith [h_iter, h_iter_gt, h_le]
+                      have step_lower : ∀ (f m : ℕ), 1 ≤ m → m * r ≤ f →
+                          m * m + 1 ≤ (f * f + n - 1) / n := by
+                        intros f m hm hfm
+                        have hf2 : f * f ≥ m * m * (r * r) := by nlinarith
+                        have hr2 : r * r ≥ n + 1 := by omega [hr_sq]
+                        have hf2' : f * f ≥ m * m * (n + 1) := by nlinarith
+                        have hf2'' : f * f + n - 1 ≥ (m * m + 1) * n + (m * m - 1) := by nlinarith
+                        have h_div : ((m * m + 1) * n + (m * m - 1)) / n ≥ m * m + 1 := by
+                          have h_c : (m * m + 1) * n + (m * m - 1) ≥ (m * m + 1) * n := by nlinarith
+                          have h_d : ((m * m + 1) * n) / n = m * m + 1 :=
+                            Nat.mul_div_cancel_left _ hn_pos
+                          have h_e : ((m * m + 1) * n) / n ≤
+                              ((m * m + 1) * n + (m * m - 1)) / n :=
+                            Nat.div_le_div_right h_c
+                          omega [h_d, h_e]
+                        exact h_div
+                      have h_step_in_layer : ∀ (f m k : ℕ), 1 ≤ m → m * r ≤ f →
+                          iterate_ceil_from n f k ≥ f + k * (m * m + 1) := by
+                        intro f m k hm hfm
+                        induction k with
+                        | zero => simp [iterate_ceil_from]
+                        | succ k ih =>
+                          simp [iterate_ceil_from, Nat.add_succ]
+                          have h_fk : iterate_ceil_from n f k ≥ m * r := by nlinarith [hfm, ih]
+                          have h_step := step_lower (iterate_ceil_from n f k) m hm h_fk
+                          nlinarith [ih, h_step]
+                      have h_layer0_step : ∀ (k : ℕ),
+                          iterate_ceil_from n 1 k ≥ 1 + k := by
+                        intro k
+                        induction k with
+                        | zero => simp [iterate_ceil_from]
+                        | succ k ih =>
+                          simp [iterate_ceil_from, Nat.add_succ]
+                          have hf : 1 ≤ iterate_ceil_from n 1 k := by nlinarith
+                          have h_step : 1 ≤
+                              (iterate_ceil_from n 1 k * iterate_ceil_from n 1 k + n - 1) / n := by
+                            have : n ≤ iterate_ceil_from n 1 k * iterate_ceil_from n 1 k + n - 1 := by nlinarith
+                            exact Nat.le_div_of_mul_le hn_pos (by omega)
+                          nlinarith [ih, h_step]
+                      have h_mono : ∀ (f1 f2 k : ℕ), f1 ≤ f2 →
+                          iterate_ceil_from n f1 k ≤ iterate_ceil_from n f2 k := by
+                        intro f1 f2 k h12
+                        induction k with
+                        | zero => exact h12
+                        | succ k ih =>
+                          simp [iterate_ceil_from]
+                          have h_s1 : (f1 * f1 + n - 1) / n ≤ (f2 * f2 + n - 1) / n := by
+                            have h_sq : f1 * f1 ≤ f2 * f2 := Nat.mul_le_mul h12 h12
+                            have h_add : f1 * f1 + n - 1 ≤ f2 * f2 + n - 1 := by nlinarith
+                            exact Nat.div_le_div_right h_add
+                          nlinarith [ih, h_s1]
+                      have h_iter_from_add : ∀ (f k1 k2 : ℕ),
+                          iterate_ceil_from n f (k1 + k2) =
+                          iterate_ceil_from n (iterate_ceil_from n f k1) k2 := by
+                        intro f k1
+                        induction k1 with
+                        | zero => simp [iterate_ceil_from, Nat.zero_add]
+                        | succ k1 ih =>
+                          have : k1 + 1 + k2 = k1 + k2 + 1 := by omega
+                          simp [iterate_ceil_from, this, ih]
+                      have h_sq_sum : (Finset.sum (Finset.Icc 1 (r-1))
+                          (fun m => (1 : ℝ) / ((m : ℕ) : ℝ) ^ 2)) ≤ 2 - 1 / (r : ℝ) := by
+                        by_cases hr1 : r ≤ 1
+                        · have : Finset.Icc 1 (r-1) = ∅ := by ext x; simp [Finset.mem_Icc]; omega
+                          simp [this]
+                        have hr2 : 2 ≤ r := by omega
+                        have h_telescope := sum_inv_sq_telescope hr2
+                        have h_2_sum : Finset.sum (Finset.Icc 2 (r-1))
+                            (fun m => (1 : ℝ) / ((m : ℕ) : ℝ) ^ 2) ≤ 1 - 1 / (r : ℝ) := by
+                          have h_bij : Finset.sum (Finset.Icc 2 r)
+                              (fun m => (1 : ℝ) / ((m : ℕ) : ℝ) ^ 2) =
+                              Finset.sum ((Finset.range r).filter (fun j => 1 ≤ j))
+                              (fun j => (1 : ℝ) / ((j + 1 : ℕ) : ℝ) ^ 2) := by
+                            apply Finset.sum_bij (fun j _ => j + 1)
+                            · intro j hj; simp only [Finset.mem_filter, Finset.mem_range] at hj
+                              simp only [Finset.mem_Icc]; exact ⟨by omega, by omega⟩
+                            · intro j1 _ j2 _ hjj; omega
+                            · intro m hm; simp only [Finset.mem_Icc] at hm
+                              use m - 1; simp only [Finset.mem_filter, Finset.mem_range]
+                              refine ⟨by omega, by omega, ?⟩; omega
+                          have h_2_r1 : Finset.Icc 2 (r-1) ⊆ Finset.Icc 2 r := by
+                            intro x hx; simp only [Finset.mem_Icc] at hx
+                            simp only [Finset.mem_Icc]; exact ⟨hx.1, by omega⟩
+                          exact le_trans (Finset.sum_le_sum_of_subset h_2_r1) (h_bij ▸ h_telescope)
+                        by_cases hr2_eq : r = 2
+                        · subst hr2_eq; simp [Finset.Icc]
+                        have hr3 : 3 ≤ r := by omega
+                        have h_split : Finset.Icc 1 (r-1) = Finset.Icc 1 1 ∪ Finset.Icc 2 (r-1) := by
+                          ext x
+                          constructor
+                          · intro hx; simp only [Finset.mem_Icc] at hx
+                            by_cases x1 : x = 1; · left; simp [x1]
+                            · right; simp [hx, x1]
+                          · intro hx; rcases hx with h | h
+                            · simp_all [Finset.mem_Icc]
+                            · simp_all [Finset.mem_Icc]
+                        rw [h_split, Finset.sum_union]
+                        · simp [Finset.Icc]; linarith [h_2_sum]
+                        · exact Finset.disjoint_Icc_Icc (by omega)
+                      have h_cross : ∀ (m : ℕ), 1 ≤ m →
+                          iterate_ceil_from n (m * r) (r / (m * m + 1) + 1) ≥
+                          (m + 1) * r + (m * m + 1) := by
+                        intro m hm
+                        have h_k := h_step_in_layer (m * r) m (r / (m * m + 1) + 1) hm (le_refl _)
+                        have h_floor : r / (m * m + 1) * (m * m + 1) ≤ r :=
+                          Nat.mul_div_le _ (m * m + 1)
+                        nlinarith [h_k, h_floor]
+                      have h_sum_lt : (Finset.sum (Finset.Icc 1 (r-1))
+                          (fun j => r / (j * j + 1) + 1) : ℕ) < 3 * r := by
+                        have h_div_le : ∀ j ∈ Finset.Icc 1 (r-1),
+                            ((r / (j * j + 1) : ℕ) : ℝ) ≤ (r : ℝ) / ((j * j + 1 : ℕ) : ℝ) := by
+                          intro j hj
+                          have h_pos : (0 : ℝ) < (j * j + 1 : ℕ) := by exact_mod_cast (by omega)
+                          have h_mul : ((r / (j * j + 1) : ℕ) : ℝ) * (j * j + 1 : ℕ) ≤ (r : ℝ) := by
+                            exact_mod_cast (Nat.mul_div_le r (j * j + 1))
+                          rw [div_le_iff₀ h_pos]; exact h_mul
+                        have h_sum_le : ((Finset.sum (Finset.Icc 1 (r-1))
+                            (fun j => r / (j * j + 1) + 1) : ℕ) : ℝ) ≤
+                            Finset.sum (Finset.Icc 1 (r-1))
+                            (fun j => (r : ℝ) / ((j * j + 1 : ℕ) : ℝ) + 1) := by
+                          push_cast; apply Finset.sum_le_sum
+                          intro j hj; push_cast; linarith [h_div_le j hj]
+                        have h_sq_le : Finset.sum (Finset.Icc 1 (r-1))
+                            (fun j => (r : ℝ) / ((j * j + 1 : ℕ) : ℝ) + 1) < 3 * r := by
+                          have h_1 : ∀ j ∈ Finset.Icc 1 (r-1),
+                              (1 : ℝ) / ((j * j + 1 : ℕ) : ℝ) ≤ (1 : ℝ) / ((j : ℕ) : ℝ) ^ 2 := by
+                            intro j hj; simp only [Finset.mem_Icc] at hj
+                            have hj_pos : (0 : ℝ) < (j : ℕ) := by exact_mod_cast (by omega)
+                            have hj2p : (0 : ℝ) < ((j * j + 1 : ℕ) : ℝ) := by exact_mod_cast (by omega)
+                            gcongr
+                          have h_count : (Finset.Icc 1 (r-1)).card = r - 1 := by
+                            by_cases hr1 : r ≤ 1; · simp [Finset.Icc, hr1]
+                            exact Finset.card_Icc 1 (r-1) (by omega) (by omega)
+                          calc Finset.sum (Finset.Icc 1 (r-1))
+                              (fun j => (r : ℝ) / ((j * j + 1 : ℕ) : ℝ) + 1)
+                              = Finset.sum (Finset.Icc 1 (r-1))
+                                (fun j => (r : ℝ) / ((j * j + 1 : ℕ) : ℝ)) +
+                                (Finset.sum (Finset.Icc 1 (r-1)) (fun _ => (1 : ℝ))) := by
+                                rw [Finset.sum_add_distrib]
+                          _ ≤ r * Finset.sum (Finset.Icc 1 (r-1))
+                                (fun j => (1 : ℝ) / ((j * j + 1 : ℕ) : ℝ)) +
+                                (Finset.sum (Finset.Icc 1 (r-1)) (fun _ => (1 : ℝ))) := by
+                                gcongr; exact Finset.sum_le_sum h_1
+                          _ ≤ r * (2 - 1 / (r : ℝ)) + ((r - 1 : ℕ) : ℝ) := by
+                                gcongr; · exact h_sq_sum
+                                · rw [h_count, Finset.sum_const]; simp
+                          _ < 3 * r := by push_cast; linarith
+                        exact_mod_cast (lt_of_le_of_lt h_sum_le h_sq_le)
+                      have h_layer_ind : ∀ (m : ℕ), 1 ≤ m → m ≤ r →
+                          (m * r > n) ∨
+                          (m < r ∧ iterate_ceil_from n (m * r)
+                            (Finset.sum (Finset.Icc m (r-1))
+                              (fun j => r / (j * j + 1) + 1)) > n) := by
+                        intro m hm hmr
+                        by_cases hmr0 : m ≥ r
+                        · left; omega [hr_sq]
+                        · right; refine ⟨by omega, ?_⟩
+                          have hm_lt : m < r := by omega
+                          set S := Finset.sum (Finset.Icc m (r-1))
+                            (fun j => r / (j * j + 1) + 1)
+                          set c := r / (m * m + 1) + 1
+                          set S_rest := Finset.sum (Finset.Icc (m+1) (r-1))
+                            (fun j => r / (j * j + 1) + 1)
+                          have h_split : S = c + S_rest := by
+                            have h_eq : Finset.Icc m (r-1) = Finset.insert m (Finset.Icc (m+1) (r-1)) := by
+                              ext x
+                              simp only [Finset.mem_Icc, Finset.mem_insert]
+                              constructor
+                              · intro h; rcases h with ⟨h1, h2⟩
+                                by_cases x_m : x = m; · left; exact x_m
+                                · right; exact ⟨by omega, h⟩
+                              · intro h; rcases h with h | h
+                                · exact ⟨by omega, by omega⟩
+                                · exact h
+                            rw [h_eq, Finset.sum_insert]
+                            · rfl
+                            · simp only [Finset.mem_Icc]; omega
+                          rw [h_split, h_iter_from_add]
+                          have h_f := h_cross m hm
+                          by_cases h_m1 : (m + 1) * r > n
+                          · exact h_mono _ _ _ h_f _ (by nlinarith [h_f, h_m1])
+                          · have h_m1_le : m + 1 ≤ r := by omega
+                            have h_rec := h_layer_ind (m+1) (by omega) h_m1_le
+                            rcases h_rec with h_gt | ⟨_, h_iter⟩
+                            · omega
+                            · exact h_mono _ _ _ h_f _ h_iter
+                      have h_iter_bound : iterate_ceil n (4 * r) > n := by
+                        have h_layer0 : iterate_ceil n r ≥ 1 + r := by
+                          have h1 := h_layer0_step r
+                          rw [show iterate_ceil n r = iterate_ceil_from n 1 r from by
+                            rw [← iterate_ceil_add n 0 r]; rfl]
+                          exact h1
+                        have h_ind := h_layer_ind 1 (by omega) (by omega)
+                        rcases h_ind with h_gt | ⟨_, h_iter⟩
+                        · omega
+                        · set S := Finset.sum (Finset.Icc 1 (r-1))
+                            (fun j => r / (j * j + 1) + 1)
+                          have h_total : r + S ≤ 4 * r := by omega [h_sum_lt]
+                          have h_iter_r_ge : iterate_ceil n r ≥ r := by omega [h_layer0]
+                          have h_add := iterate_ceil_add n r S
+                          rw [h_add]
+                          exact h_mono _ _ _ h_iter_r_ge _ h_iter
+                      by_contra h_neg
+                      push_neg at h_neg
+                      have h_eq : 4 * Nat.sqrt n + 4 = 4 * r := by rw [hr_def]; omega
+                      have h_iter_gt := h_iter_bound
+                      rw [h_eq] at h_iter_gt
+                      have h_idx2 : 4 * Nat.sqrt n + 4 < a.length := by
+                        have : (4 * Nat.sqrt n + 4 : ℝ) < (a.length : ℝ) := by linarith
+                        exact_mod_cast this
+                      have h_iter := h_iter_lower (4 * Nat.sqrt n + 4) h_idx2
+                      have h_le : a.get ⟨4 * Nat.sqrt n + 4, h_idx2⟩ ≤ n := by
+                        have hmem : a.get ⟨4 * Nat.sqrt n + 4, h_idx2⟩ ∈ a := by simp [List.getElem_mem]
+                        exact ha_le _ hmem
+                      linarith [h_iter, h_iter_gt, h_le]
 
 end
 end BoundedLcm
