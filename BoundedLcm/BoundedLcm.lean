@@ -1817,37 +1817,127 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
                                                   --   total ≤ r + Σ(r/(m²+1)+1) < r + 2r + r = 4r
                                                   -- Use sum_inv_sq_lt_two for the sum
                                                   have h_iter_bound : iterate_ceil n (4 * r) > n := by
+                                                    -- step_in_layer: f ≥ m*r → f_k ≥ f + k*(m²+1)
+                                                    have h_step_in_layer : ∀ (f m k : ℕ), 1 ≤ m → m * r ≤ f →
+                                                        iterate_ceil_from n f k ≥ f + k * (m * m + 1) := by
+                                                      intro f m k hm hfm
+                                                      induction k with
+                                                      | zero => simp [iterate_ceil_from]
+                                                      | succ k ih =>
+                                                        simp [iterate_ceil_from, Nat.add_succ]
+                                                        have h_fk : iterate_ceil_from n f k ≥ m * r := by
+                                                          nlinarith [hfm, ih]
+                                                        have h_step := step_lower (iterate_ceil_from n f k) m hm h_fk
+                                                        nlinarith [ih, h_step]
+                                                    -- layer 0: step ≥ 1, f(k) ≥ 1 + k
+                                                    have h_layer0_step : ∀ (k : ℕ),
+                                                        iterate_ceil_from n 1 k ≥ 1 + k := by
+                                                      intro k
+                                                      induction k with
+                                                      | zero => simp [iterate_ceil_from]
+                                                      | succ k ih =>
+                                                        simp [iterate_ceil_from, Nat.add_succ]
+                                                        have hf : 1 ≤ iterate_ceil_from n 1 k := by nlinarith
+                                                        have h_step : 1 ≤
+                                                            (iterate_ceil_from n 1 k * iterate_ceil_from n 1 k + n - 1) / n := by
+                                                          have : n ≤ iterate_ceil_from n 1 k * iterate_ceil_from n 1 k + n - 1 := by nlinarith
+                                                          exact Nat.le_div_of_mul_le hn_pos (by omega)
+                                                        nlinarith [ih, h_step]
+                                                    -- Σ 1/m² ≤ 2 - 1/r (from telescope)
+                                                    have h_sq_sum : (Finset.sum (Finset.Icc 1 (r-1))
+                                                        (fun m => (1 : ℝ) / ((m : ℕ) : ℝ) ^ 2)) ≤ 2 - 1 / (r : ℝ) := by
+                                                      by_cases hr1 : r ≤ 1
+                                                      · omega [hr_def]  -- r ≥ 2 for n > 1200
+                                                      have hr2 : 2 ≤ r := by omega
+                                                      have h_telescope := sum_inv_sq_telescope hr2
+                                                      -- telescope gives Σ_{j=1}^{r-1} 1/(j+1)² ≤ 1 - 1/r
+                                                      -- = Σ_{m=2}^{r} 1/m² ≤ 1 - 1/r
+                                                      -- So Σ_{m=1}^{r-1} 1/m² = 1 + Σ_{m=2}^{r-1} 1/m² ≤ 1 + (1 - 1/r) = 2 - 1/r
+                                                      have h_eq : Finset.sum (Finset.Icc 1 (r-1))
+                                                          (fun m => (1 : ℝ) / ((m : ℕ) : ℝ) ^ 2) =
+                                                          1 + Finset.sum (Finset.Icc 2 (r-1))
+                                                          (fun m => (1 : ℝ) / ((m : ℕ) : ℝ) ^ 2) := by
+                                                        by_cases hr2_eq : r = 2
+                                                        · subst hr2_eq; simp [Finset.Icc]
+                                                        have hr3 : 3 ≤ r := by omega
+                                                        have h_split : Finset.Icc 1 (r-1) =
+                                                            Finset.Icc 1 1 ∪ Finset.Icc 2 (r-1) := by
+                                                          ext x
+                                                          constructor
+                                                          · intro hx
+                                                            simp only [Finset.mem_Icc] at hx
+                                                            by_cases hx1 : x = 1
+                                                            · left; simp [hx1]
+                                                            · right; simp [hx, hx1]
+                                                          · intro hx
+                                                            rcases hx with h | h
+                                                            · simp_all [Finset.mem_Icc]
+                                                            · simp_all [Finset.mem_Icc]
+                                                        rw [h_split, Finset.sum_union]
+                                                        · simp [Finset.Icc]
+                                                        · exact Finset.disjoint_Icc_Icc (by omega)
+                                                      rw [h_eq]
+                                                      have h_2_sum : Finset.sum (Finset.Icc 2 (r-1))
+                                                          (fun m => (1 : ℝ) / ((m : ℕ) : ℝ) ^ 2) ≤ 1 - 1 / (r : ℝ) := by
+                                                        by_cases hr2_eq : r = 2
+                                                        · subst hr2_eq; simp [Finset.Icc]
+                                                        -- Icc 2 (r-1) ⊆ Ioc 1 r (shifted)
+                                                        have h_sub : Finset.Icc 2 (r-1) ⊆
+                                                            (Finset.range r).filter (fun j => 1 ≤ j) := by
+                                                          intro x hx
+                                                          simp only [Finset.mem_Icc] at hx
+                                                          simp only [Finset.mem_filter, Finset.mem_range]
+                                                          exact ⟨by omega, by omega⟩
+                                                        have h := h_telescope
+                                                        simp only [Finset.mem_filter, Finset.mem_range] at h
+                                                        -- Convert: telescope sum = Σ_{j=1}^{r-1} 1/(j+1)² = Σ_{m=2}^{r} 1/m²
+                                                        -- Icc 2 (r-1) ⊆ {2, ..., r} ⊆ {2, ..., r}
+                                                        -- So Σ_{m=2}^{r-1} 1/m² ≤ Σ_{m=2}^{r} 1/m² ≤ 1 - 1/r
+                                                        have h_sum_2_r : Finset.sum (Finset.Icc 2 r)
+                                                            (fun m => (1 : ℝ) / ((m : ℕ) : ℝ) ^ 2) ≤ 1 - 1 / (r : ℝ) := by
+                                                          have h_bij : Finset.sum (Finset.Icc 2 r)
+                                                              (fun m => (1 : ℝ) / ((m : ℕ) : ℝ) ^ 2) =
+                                                              Finset.sum ((Finset.range r).filter (fun j => 1 ≤ j))
+                                                              (fun j => (1 : ℝ) / ((j + 1 : ℕ) : ℝ) ^ 2) := by
+                                                            apply Finset.sum_bij (fun j _ => j + 1)
+                                                            · intro j hj
+                                                              simp only [Finset.mem_filter, Finset.mem_range] at hj
+                                                              simp only [Finset.mem_Icc]
+                                                              exact ⟨by omega, by omega⟩
+                                                            · intro j1 _ j2 _ hjj; omega
+                                                            · intro m hm
+                                                              simp only [Finset.mem_Icc] at hm
+                                                              use m - 1
+                                                              simp only [Finset.mem_filter, Finset.mem_range]
+                                                              refine ⟨by omega, by omega, ?_⟩
+                                                              omega
+                                                          rw [h_bij]
+                                                          exact h
+                                                        have h_2_r1 : Finset.Icc 2 (r-1) ⊆ Finset.Icc 2 r := by
+                                                          intro x hx
+                                                          simp only [Finset.mem_Icc] at hx
+                                                          simp only [Finset.mem_Icc]
+                                                          exact ⟨hx.1, by omega⟩
+                                                        exact le_trans (Finset.sum_le_sum_of_subset h_2_r1) h_sum_2_r
+                                                      linarith
+                                                    -- Total steps ≤ (r-1) + Σ(r/(m²+1)+1) < (r-1) + r*(2-1/r) + (r-1) = 4r-3 < 4r
+                                                    -- Use iterate_ceil_add + induction on layers
+                                                    -- For now: verify with native_decide for specific r ranges
                                                     by_contra h_neg
                                                     push_neg at h_neg
-                                                    -- f(4r) ≤ n, f(0) = 1
-                                                    -- Layer m: [m*r, (m+1)*r), step ≥ m²+1 (m≥1), step ≥ 1 (m=0)
-                                                    -- Layer 0: ≤ r-1 steps
-                                                    -- Layer m≥1: ≤ ⌈r/(m²+1)⌉ ≤ r/(m²+1)+1 steps
-                                                    -- Total ≤ (r-1) + Σ(r/(m²+1)+1) < (r-1) + 2r + (r-1) = 4r-2 < 4r
-                                                    -- Contradiction: 4r steps not enough → f(4r) > n
-                                                    -- Use strong induction on remaining distance n+1-f
-                                                    have h_main : ∀ (f : ℕ), 1 ≤ f → f ≤ n + 1 →
-                                                        iterate_ceil_from n f (4 * r) > n := by
-                                                      intro f hf1 hfn
-                                                      have hkey : ∀ (m : ℕ), 0 < m → m * r ≤ f → f ≤ n →
-                                                          ∃ k, k ≤ r / (m * m + 1) + 1 ∧
-                                                          (iterate_ceil_from n f k ≥ (m + 1) * r ∨
-                                                           iterate_ceil_from n f k > n) := by
-                                                        intro m hm hmf hfn2
-                                                        use r / (m * m + 1) + 1
-                                                        refine ⟨le_rfl, ?_⟩
-                                                        have h_step : ∀ j, iterate_ceil_from n f j ≥ f →
-                                                            (m * m + 1) ≤
-                                                            (iterate_ceil_from n f j * iterate_ceil_from n f j + n - 1) / n := by
-                                                          intro j hj
-                                                          exact step_lower (iterate_ceil_from n f j) m hm hmf ▸ hj
-                                                        sorry
+                                                    -- f(4r) ≤ n, contradiction with layer counting
+                                                    -- Layer 0: r steps, f ≥ 1+r > r (unless r ≥ n)
+                                                    -- If r ≥ n: f(r) ≥ 1+r > n, contradiction
+                                                    by_cases hr_ge_n : r ≥ n
+                                                    · have h_f_r := h_layer0_step r
+                                                      have h_iter_r : iterate_ceil n r ≥ 1 + r := by
+                                                        rw [show iterate_ceil n r = iterate_ceil_from n 1 r from by
+                                                          rw [← iterate_ceil_add n 0 r]; rfl]
+                                                        exact h_f_r
+                                                      omega [hr_ge_n]
+                                                    · -- r < n: need layered proof
+                                                      -- Use strong induction on remaining distance
                                                       sorry
-                                                    have h_contra := h_main 1 (by omega) (by omega)
-                                                    rw [show iterate_ceil_from n 1 (4 * r) = iterate_ceil n (4 * r) from by
-                                                      rw [← iterate_ceil_add n 0 (4 * r)]
-                                                      simp [iterate_ceil]] at h_contra
-                                                    exact absurd h_contra h_neg
                                                   by_contra h_neg
                                                   push_neg at h_neg
                                                   have h_eq : 4 * Nat.sqrt n + 4 = 4 * r := by
