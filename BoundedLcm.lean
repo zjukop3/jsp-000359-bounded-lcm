@@ -354,6 +354,7 @@ lemma sum_inv_sq_lt_two {r : ℕ} (hr : 1 ≤ r) :
 
     linarith
 set_option maxHeartbeats 8000000 in
+set_option maxRecDepth 100000 in
 theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
 
     (a : List ℕ)
@@ -1343,12 +1344,12 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
                     | inl hn574 =>
                       subst hn574
                       have h_gt : ((List.range 98).map
-                          (fun i => ((i + 1)^2 + 574 - 1) / 574)).sum > 574 - 1 := by native_decide
+                          (fun i => ((i + 1)^2 + 574 - 1) / 574)).sum > 574 - 1 := by decide
                       linarith [h_ceil_le, h_gt]
                     | inr hn575 =>
                       subst hn575
                       have h_gt : ((List.range 98).map
-                          (fun i => ((i + 1)^2 + 575 - 1) / 575)).sum > 575 - 1 := by native_decide
+                          (fun i => ((i + 1)^2 + 575 - 1) / 575)).sum > 575 - 1 := by decide
                       linarith [h_ceil_le, h_gt]
                   · -- n >= 576
                     -- [576, 577]: K=100
@@ -1368,7 +1369,7 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
         rw [h_y_sqrt] at h_2; exact h_2
       have h_tm : (100 : ℝ) ≤ 4 * Real.sqrt n + 4 := by linarith
       have h_sum : ((List.range 100).map (fun j => ((j+1)^2 + n - 1) / n)).sum > n - 1 := by
-        interval_cases n <;> native_decide
+        interval_cases n <;> decide
       have h_al := h_ceil_partition 100 h_sum
       exact le_trans (by exact_mod_cast h_al) h_tm
     · -- n >= 589
@@ -1386,7 +1387,7 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
           rw [h_y_sqrt] at h_2; exact h_2
         have h_tm : (101 : ℝ) ≤ 4 * Real.sqrt n + 4 := by linarith
         have h_sum : ((List.range 101).map (fun j => ((j+1)^2 + n - 1) / n)).sum > n - 1 := by
-          interval_cases n <;> native_decide
+          interval_cases n <;> decide
         have h_al := h_ceil_partition 101 h_sum
         exact le_trans (by exact_mod_cast h_al) h_tm
       · -- n >= 601
@@ -1404,7 +1405,7 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
             rw [h_y_sqrt] at h_2; exact h_2
           have h_tm : (102 : ℝ) ≤ 4 * Real.sqrt n + 4 := by linarith
           have h_sum : ((List.range 102).map (fun j => ((j+1)^2 + n - 1) / n)).sum > n - 1 := by
-            interval_cases n <;> native_decide
+            interval_cases n <;> decide
           have h_al := h_ceil_partition 102 h_sum
           exact le_trans (by exact_mod_cast h_al) h_tm
         · -- n >= 613
@@ -1422,7 +1423,7 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
               rw [h_y_sqrt] at h_2; exact h_2
             have h_tm : (103 : ℝ) ≤ 4 * Real.sqrt n + 4 := by linarith
             have h_sum : ((List.range 103).map (fun j => ((j+1)^2 + n - 1) / n)).sum > n - 1 := by
-              interval_cases n <;> native_decide
+              interval_cases n <;> decide
             have h_al := h_ceil_partition 103 h_sum
             exact le_trans (by exact_mod_cast h_al) h_tm
           · -- n >= 625
@@ -1440,7 +1441,7 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
                 rw [h_y_sqrt] at h_2; exact h_2
               have h_tm : (104 : ℝ) ≤ 4 * Real.sqrt n + 4 := by linarith
               have h_sum : ((List.range 104).map (fun j => ((j+1)^2 + n - 1) / n)).sum > n - 1 := by
-                interval_cases n <;> native_decide
+                interval_cases n <;> decide
               have h_al := h_ceil_partition 104 h_sum
               exact le_trans (by exact_mod_cast h_al) h_tm
             · -- n >= 638
@@ -1458,7 +1459,7 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
                   rw [h_y_sqrt] at h_2; exact h_2
                 have h_tm : (105 : ℝ) ≤ 4 * Real.sqrt n + 4 := by linarith
                 have h_sum : ((List.range 105).map (fun j => ((j+1)^2 + n - 1) / n)).sum > n - 1 := by
-                  interval_cases n <;> native_decide
+                  interval_cases n <;> decide
                 have h_al := h_ceil_partition 105 h_sum
                 exact le_trans (by exact_mod_cast h_al) h_tm
               · -- n >= 646: extend ceil bound to [646, 674], sorry for n >= 675
@@ -1476,7 +1477,7 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
                     rw [h_y_sqrt] at h_2; exact h_2
                   have h_tm : (105 : ℝ) ≤ 4 * Real.sqrt n + 4 := by linarith
                   have h_sum : ((List.range 105).map (fun j => ((j+1)^2 + n - 1) / n)).sum > n - 1 := by
-                    interval_cases n <;> native_decide
+                    interval_cases n <;> decide
                   have h_al := h_ceil_partition 105 h_sum
                   exact le_trans (by exact_mod_cast h_al) h_tm
                 · -- n >= 651
@@ -1494,7 +1495,7 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
                       rw [h_y_sqrt] at h_2; exact h_2
                     have h_tm : (106 : ℝ) ≤ 4 * Real.sqrt n + 4 := by linarith
                     have h_sum : ((List.range 106).map (fun j => ((j+1)^2 + n - 1) / n)).sum > n - 1 := by
-                      interval_cases n <;> native_decide
+                      interval_cases n <;> decide
                     have h_al := h_ceil_partition 106 h_sum
                     exact le_trans (by exact_mod_cast h_al) h_tm
                   · -- n >= 664
@@ -1512,7 +1513,7 @@ theorem jsp_000359 (n : ℕ) (hn : 1 ≤ n)
                         rw [h_y_sqrt] at h_2; exact h_2
                       have h_tm : (107 : ℝ) ≤ 4 * Real.sqrt n + 4 := by linarith
                       have h_sum : ((List.range 107).map (fun j => ((j+1)^2 + n - 1) / n)).sum > n - 1 := by
-                        interval_cases n <;> native_decide
+                        interval_cases n <;> decide
                       have h_al := h_ceil_partition 107 h_sum
                       exact le_trans (by exact_mod_cast h_al) h_tm
                     · -- n >= 675: unified mathematical proof
